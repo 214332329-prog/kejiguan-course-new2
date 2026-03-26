@@ -362,7 +362,9 @@ export default function CreateCoursePage() {
                   {course.modules.map((module) => (
                     <div key={module.id} className={activeModuleId === module.id ? '' : 'hidden'}>
                       <div className="mb-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">模块信息</h3>
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-lg font-semibold text-gray-900">模块信息</h3>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">模块标题</label>
@@ -596,12 +598,47 @@ export default function CreateCoursePage() {
                 </div>
               </div>
             </div>
+
+            {/* 底部保存按钮 */}
+            <div className="mt-8 flex justify-end">
+              {saveSuccess ? (
+                <button
+                  disabled
+                  className="px-6 py-3 bg-green-500 text-white rounded-md flex items-center gap-2 text-lg font-medium"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                  </svg>
+                  创建成功
+                </button>
+              ) : (
+                <button
+                  onClick={handleSaveCourse}
+                  disabled={saving}
+                  className="px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-lg font-medium"
+                >
+                  {saving ? (
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  )}
+                  {saving ? '创建中...' : '保存课程'}
+                </button>
+              )}
+            </div>
           </div>
         </main>
       </div>
 
       {/* AI助手 */}
-      <TeacherAIAssistant currentPage="create-course" />
+      <div className="max-w-7xl mx-auto">
+        <TeacherAIAssistant currentPage="create-course" />
+      </div>
     </div>
   )
 }

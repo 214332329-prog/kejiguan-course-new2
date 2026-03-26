@@ -135,7 +135,7 @@ export default function TeacherAIAssistant({ currentPage = '' }: TeacherAIAssist
   }
 
   return (
-    <div className="h-[220px] bg-white border-t border-gray-200 flex flex-col">
+    <div className="bg-white border-t border-gray-200 flex flex-col">
       {/* 聊天区域 */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
         {messages.map((msg) => (
