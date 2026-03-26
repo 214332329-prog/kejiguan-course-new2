@@ -136,6 +136,36 @@ export default function CreateCoursePage() {
     }))
   }
 
+  // 删除模块
+  const handleDeleteModule = (moduleId: string) => {
+    if (confirm('确定要删除这个模块吗？删除后模块内的所有任务也会被删除。')) {
+      setCourse(prev => ({
+        ...prev,
+        modules: prev.modules.filter(module => module.id !== moduleId)
+      }))
+      if (activeModuleId === moduleId) {
+        setActiveModuleId(prev => prev === moduleId ? null : prev)
+      }
+    }
+  }
+
+  // 删除任务
+  const handleDeleteTask = (moduleId: string, taskId: string) => {
+    if (confirm('确定要删除这个任务吗？')) {
+      setCourse(prev => ({
+        ...prev,
+        modules: prev.modules.map(module =>
+          module.id === moduleId
+            ? {
+                ...module,
+                tasks: module.tasks.filter(task => task.id !== taskId)
+              }
+            : module
+        )
+      }))
+    }
+  }
+
   // 计算总任务数
   const calculateTotalTasks = () => {
     return course.modules.reduce((total, module) => total + module.tasks.length, 0)
@@ -341,10 +371,22 @@ export default function CreateCoursePage() {
                       <div
                         key={module.id}
                         className={`p-3 rounded-md cursor-pointer transition-colors ${activeModuleId === module.id ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
-                        onClick={() => setActiveModuleId(module.id)}
                       >
-                        <h4 className="font-medium text-gray-900">{module.title}</h4>
-                        <p className="text-sm text-gray-600">{module.tasks.length} 个任务</p>
+                        <div className="flex justify-between items-center">
+                          <div onClick={() => setActiveModuleId(module.id)} className="flex-1 cursor-pointer">
+                            <h4 className="font-medium text-gray-900">{module.title}</h4>
+                            <p className="text-sm text-gray-600">{module.tasks.length} 个任务</p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteModule(module.id)
+                            }}
+                            className="px-2 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600 ml-2"
+                          >
+                            删除
+                          </button>
+                        </div>
                       </div>
                     ))}
                     {course.modules.length === 0 && (
@@ -416,7 +458,10 @@ export default function CreateCoursePage() {
                                   <button className="px-2 py-1 bg-yellow-500 text-white rounded-md text-xs hover:bg-yellow-600">
                                     编辑
                                   </button>
-                                  <button className="px-2 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600">
+                                  <button 
+                                    onClick={() => handleDeleteTask(module.id, task.id)}
+                                    className="px-2 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600"
+                                  >
                                     删除
                                   </button>
                                 </div>
