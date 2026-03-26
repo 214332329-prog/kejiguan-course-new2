@@ -67,7 +67,10 @@ export const courseService = {
       .from('courses')
       .insert({
         id,
-        ...course,
+        title: course.title,
+        description: course.description,
+        total_duration: course.totalDuration,
+        total_tasks: course.totalTasks,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
@@ -86,12 +89,18 @@ export const courseService = {
 
   // 更新课程
   async updateCourse(id: string, updates: Partial<Course>): Promise<Course | null> {
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    };
+    
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.totalDuration !== undefined) updateData.total_duration = updates.totalDuration;
+    if (updates.totalTasks !== undefined) updateData.total_tasks = updates.totalTasks;
+    
     const { data, error } = await supabase
       .from('courses')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
@@ -163,7 +172,10 @@ export const moduleService = {
       .from('modules')
       .insert({
         id,
-        ...module,
+        course_id: module.course_id,
+        title: module.title,
+        description: module.description,
+        icon: module.icon,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
@@ -182,12 +194,17 @@ export const moduleService = {
 
   // 更新模块
   async updateModule(id: string, updates: Partial<Module>): Promise<Module | null> {
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    };
+    
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.icon !== undefined) updateData.icon = updates.icon;
+    
     const { data, error } = await supabase
       .from('modules')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
@@ -269,7 +286,11 @@ export const taskService = {
       .from('tasks')
       .insert({
         id,
-        ...task,
+        module_id: task.module_id,
+        title: task.title,
+        content: task.content,
+        status: task.status,
+        duration: task.duration,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
@@ -295,12 +316,18 @@ export const taskService = {
       .eq('id', id)
       .single();
     
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    };
+    
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.content !== undefined) updateData.content = updates.content;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.duration !== undefined) updateData.duration = updates.duration;
+    
     const { data, error } = await supabase
       .from('tasks')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
