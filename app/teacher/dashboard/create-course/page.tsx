@@ -282,7 +282,7 @@ export default function CreateCoursePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                   )}
-                  {saving ? '创建中...' : '创建课程'}
+                  {saving ? '创建中...' : '保存课程'}
                 </button>
               )}
             </div>
@@ -676,13 +676,13 @@ export default function CreateCoursePage() {
                 </button>
               )}
             </div>
+
+            {/* AI助手 */}
+            <div className="mt-8">
+              <TeacherAIAssistant currentPage="create-course" />
+            </div>
           </div>
         </main>
-      </div>
-
-      {/* AI助手 */}
-      <div className="max-w-7xl mx-auto">
-        <TeacherAIAssistant currentPage="create-course" />
       </div>
     </div>
   )
