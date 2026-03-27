@@ -37,9 +37,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-md p-6 sm:p-8 bg-white rounded-lg shadow-md">
+        <h1 className="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-6">
           科技馆课程平台
         </h1>
         
