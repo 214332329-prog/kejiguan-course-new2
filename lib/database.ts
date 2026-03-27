@@ -18,17 +18,111 @@ export const courseService = {
       return cachedData;
     }
     
-    const { data, error } = await supabase
-      .from('courses')
-      .select('*');
-    
-    if (error) {
-      console.error('Error fetching courses:', error);
+    try {
+      // 获取所有课程
+      const { data: coursesData, error: coursesError } = await supabase
+        .from('courses')
+        .select('*');
+      
+      if (coursesError) {
+        console.error('Error fetching courses:', coursesError);
+        return [];
+      }
+      
+      // 为每个课程获取模块数据
+      const coursesWithModules = await Promise.all(
+        coursesData.map(async (course) => {
+          const { data: modulesData, error: modulesError } = await supabase
+            .from('modules')
+            .select('*')
+            .eq('course_id', course.id);
+          
+          if (modulesError) {
+            console.error(`Error fetching modules for course ${course.id}:`, modulesError);
+            return {
+              id: course.id,
+              title: course.title,
+              description: course.description,
+              modules: [],
+              totalDuration: course.total_duration || '0分钟',
+              totalTasks: course.total_tasks || 0,
+              created_at: course.created_at,
+              updated_at: course.updated_at
+            };
+          }
+          
+          // 为每个模块获取任务数据
+          const modulesWithTasks = await Promise.all(
+            modulesData.map(async (module) => {
+              const { data: tasksData, error: tasksError } = await supabase
+                .from('tasks')
+                .select('*')
+                .eq('module_id', module.id);
+              
+              if (tasksError) {
+                console.error(`Error fetching tasks for module ${module.id}:`, tasksError);
+                return {
+                  id: module.id,
+                  title: module.title,
+                  icon: module.icon,
+                  description: module.description,
+                  tasks: [],
+                  course_id: module.course_id,
+                  created_at: module.created_at,
+                  updated_at: module.updated_at
+                };
+              }
+              
+              // 映射任务字段
+              const mappedTasks = tasksData.map(task => ({
+                id: task.id,
+                title: task.title,
+                taskType: task.task_type,
+                status: task.status,
+                duration: task.duration,
+                content: task.content,
+                videoUrl: task.video_url,
+                requirements: task.requirements,
+                resources: task.resources,
+                module_id: task.module_id,
+                created_at: task.created_at,
+                updated_at: task.updated_at,
+                quizQuestions: task.quiz_questions,
+                discussionTopic: task.discussion_topic
+              }));
+              
+              return {
+                id: module.id,
+                title: module.title,
+                icon: module.icon,
+                description: module.description,
+                tasks: mappedTasks,
+                course_id: module.course_id,
+                created_at: module.created_at,
+                updated_at: module.updated_at
+              };
+            })
+          );
+          
+          return {
+            id: course.id,
+            title: course.title,
+            description: course.description,
+            modules: modulesWithTasks,
+            totalDuration: course.total_duration || '0分钟',
+            totalTasks: course.total_tasks || 0,
+            created_at: course.created_at,
+            updated_at: course.updated_at
+          };
+        })
+      );
+      
+      cache.set(cacheKey, coursesWithModules);
+      return coursesWithModules;
+    } catch (error) {
+      console.error('Error in getCourses:', error);
       return [];
     }
-    
-    cache.set(cacheKey, data);
-    return data;
   },
 
   // 获取单个课程
@@ -40,19 +134,111 @@ export const courseService = {
       return cachedData;
     }
     
-    const { data, error } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching course:', error);
+    try {
+      const { data: courseData, error: courseError } = await supabase
+        .from('courses')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (courseError) {
+        console.error('Error fetching course:', courseError);
+        return null;
+      }
+      
+      // 获取课程的模块数据
+      const { data: modulesData, error: modulesError } = await supabase
+        .from('modules')
+        .select('*')
+        .eq('course_id', id);
+      
+      if (modulesError) {
+        console.error(`Error fetching modules for course ${id}:`, modulesError);
+        const course: Course = {
+          id: courseData.id,
+          title: courseData.title,
+          description: courseData.description,
+          modules: [],
+          totalDuration: courseData.total_duration || '0分钟',
+          totalTasks: courseData.total_tasks || 0,
+          created_at: courseData.created_at,
+          updated_at: courseData.updated_at
+        };
+        
+        cache.set(cacheKey, course);
+        return course;
+      }
+      
+      // 为每个模块获取任务数据
+      const modulesWithTasks = await Promise.all(
+        modulesData.map(async (module) => {
+          const { data: tasksData, error: tasksError } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('module_id', module.id);
+          
+          if (tasksError) {
+            console.error(`Error fetching tasks for module ${module.id}:`, tasksError);
+            return {
+              id: module.id,
+              title: module.title,
+              icon: module.icon,
+              description: module.description,
+              tasks: [],
+              course_id: module.course_id,
+              created_at: module.created_at,
+              updated_at: module.updated_at
+            };
+          }
+          
+          // 映射任务字段
+          const mappedTasks = tasksData.map(task => ({
+            id: task.id,
+            title: task.title,
+            taskType: task.task_type,
+            status: task.status,
+            duration: task.duration,
+            content: task.content,
+            videoUrl: task.video_url,
+            requirements: task.requirements,
+            resources: task.resources,
+            module_id: task.module_id,
+            created_at: task.created_at,
+            updated_at: task.updated_at,
+            quizQuestions: task.quiz_questions,
+            discussionTopic: task.discussion_topic
+          }));
+          
+          return {
+            id: module.id,
+            title: module.title,
+            icon: module.icon,
+            description: module.description,
+            tasks: mappedTasks,
+            course_id: module.course_id,
+            created_at: module.created_at,
+            updated_at: module.updated_at
+          };
+        })
+      );
+      
+      const course: Course = {
+        id: courseData.id,
+        title: courseData.title,
+        description: courseData.description,
+        modules: modulesWithTasks,
+        totalDuration: courseData.total_duration || '0分钟',
+        totalTasks: courseData.total_tasks || 0,
+        created_at: courseData.created_at,
+        updated_at: courseData.updated_at
+      };
+      
+      cache.set(cacheKey, course);
+      return course;
+    } catch (error) {
+      console.error('Error in getCourse:', error);
       return null;
     }
-    
-    cache.set(cacheKey, data);
-    return data;
   },
 
   // 创建课程
