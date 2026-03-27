@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Course, Module, Task, Resource } from '@/types'
 import { courseService, moduleService, taskService } from '@/lib/database'
@@ -136,8 +136,17 @@ function ResourceAddButton({ type, label, color, onAdd }: ResourceAddButtonProps
   )
 }
 
+// 拖拽排序功能
+const reorder = <T,>(list: T[], startIndex: number, endIndex: number): T[] => {
+  const result = Array.from(list)
+  const [removed] = result.splice(startIndex, 1)
+  result.splice(endIndex, 0, removed)
+  return result
+}
+
 export default function CreateCoursePage() {
   const router = useRouter()
+  const [dragging, setDragging] = useState(false)
   
   const [course, setCourse] = useState<Course>({
     id: `course-${Date.now()}`,
@@ -232,7 +241,7 @@ export default function CreateCoursePage() {
   // 添加新模块
   const handleAddModule = () => {
     const newModule: Module = {
-      id: `module-${course.modules.length + 1}`,
+      id: `module-${Date.now()}`,
       title: `新模块 ${course.modules.length + 1}`,
       description: '',
       tasks: []
@@ -250,8 +259,9 @@ export default function CreateCoursePage() {
     if (!module) return
 
     const newTask: Task = {
-      id: `task-${module.tasks.length + 1}`,
+      id: `task-${Date.now()}`,
       title: `新任务 ${module.tasks.length + 1}`,
+      taskType: 'theory',
       status: 'pending',
       duration: '30分钟'
     }
@@ -289,6 +299,41 @@ export default function CreateCoursePage() {
             ? {
                 ...module,
                 tasks: module.tasks.filter(task => task.id !== taskId)
+              }
+            : module
+        )
+      }))
+    }
+  }
+
+  // 模块拖拽排序
+  const handleModuleDragStart = () => setDragging(true)
+  const handleModuleDragEnd = () => setDragging(false)
+  
+  const handleModuleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+  }
+  
+  const handleModuleDrop = (e: React.DragEvent, endIndex: number, startIndex: number) => {
+    e.preventDefault()
+    if (startIndex !== endIndex) {
+      setCourse(prev => ({
+        ...prev,
+        modules: reorder(prev.modules, startIndex, endIndex)
+      }))
+    }
+  }
+
+  // 任务拖拽排序
+  const handleTaskDragEnd = (moduleId: string, startIndex: number, endIndex: number) => {
+    if (startIndex !== endIndex) {
+      setCourse(prev => ({
+        ...prev,
+        modules: prev.modules.map(module =>
+          module.id === moduleId
+            ? {
+                ...module,
+                tasks: reorder(module.tasks, startIndex, endIndex)
               }
             : module
         )
@@ -366,6 +411,9 @@ export default function CreateCoursePage() {
               ...task,
               id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               module_id: moduleWithId.id,
+              task_type: task.taskType,
+              quiz_questions: task.quizQuestions,
+              discussion_topic: task.discussionTopic,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             }
@@ -392,9 +440,12 @@ export default function CreateCoursePage() {
               await taskService.createTask({
                 module_id: savedModule.id,
                 title: task.title,
+                task_type: task.taskType,
                 status: task.status,
                 duration: task.duration,
-                content: task.content
+                content: task.content,
+                quiz_questions: task.quizQuestions,
+                discussion_topic: task.discussionTopic
               })
             }
           }
@@ -417,25 +468,33 @@ export default function CreateCoursePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       {/* 顶部导航栏 */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">教师课程开发中心</h1>
+          <div className="flex justify-between h-16 items-center">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <h1 className="text-xl font-bold text-gray-800">教师课程开发中心</h1>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center space-x-3">
               <button
                 onClick={() => router.push('/teacher/dashboard')}
-                className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 mr-4"
+                className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors flex items-center gap-1"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
                 返回
               </button>
               {saveSuccess ? (
                 <button
                   disabled
-                  className="px-4 py-2 bg-green-500 text-white rounded-md flex items-center gap-2"
+                  className="px-4 py-1.5 bg-green-500 text-white rounded-lg flex items-center gap-2 text-sm"
                 >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
@@ -446,7 +505,7 @@ export default function CreateCoursePage() {
                 <button
                   onClick={handleSaveCourse}
                   disabled={saving}
-                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-4 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
                 >
                   {saving ? (
                     <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -466,37 +525,56 @@ export default function CreateCoursePage() {
         </div>
       </header>
 
-      {/* 侧边导航 */}
-      <div className="flex">
-        <aside className="w-64 md:w-56 bg-white shadow-sm hidden md:block">
-          <nav className="mt-5 px-2 space-y-1">
+      {/* 主内容区 */}
+      <div className="flex min-h-[calc(100vh-4rem)]">
+        {/* 侧边导航 */}
+        <aside className="w-64 bg-white shadow-sm hidden md:block h-[calc(100vh-4rem)] sticky top-16">
+          <nav className="mt-6 px-4 space-y-1">
             <a
               href="/teacher/dashboard"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              className="flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
             >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
               课程管理
             </a>
             <a
               href="/teacher/analytics"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              className="flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
             >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
               数据分析
+            </a>
+            <a
+              href="/teacher/resources"
+              className="flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+              资源管理
             </a>
           </nav>
         </aside>
 
-        {/* 主内容区 */}
+        {/* 主内容 */}
         <main className="flex-1 p-6">
           <div className="max-w-7xl mx-auto">
             {/* 页面标题 */}
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">创建新课程</h2>
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">创建新课程</h2>
+              <p className="text-gray-600">设计和构建您的课程内容</p>
+            </div>
 
             {/* 课程基本信息 */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">课程基本信息</h3>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">课程基本信息</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">课程标题</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">课程标题 *</label>
                   <input
                     type="text"
                     value={course.title}
@@ -532,42 +610,76 @@ export default function CreateCoursePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* 左侧模块列表 */}
               <div className="lg:col-span-1">
-                <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">课程模块</h3>
+                    <h3 className="text-lg font-semibold text-gray-800">课程模块</h3>
                     <button
                       onClick={handleAddModule}
-                      className="px-3 py-1 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600"
+                      className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors flex items-center gap-1 shadow-sm"
                     >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
                       添加模块
                     </button>
                   </div>
-                  <div className="space-y-2">
-                    {course.modules.map((module) => (
+                  <div className="space-y-3">
+                    {course.modules.map((module, index) => (
                       <div
                         key={module.id}
-                        className={`p-3 rounded-md cursor-pointer transition-colors ${activeModuleId === module.id ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
+                        draggable
+                        onDragStart={() => handleModuleDragStart()}
+                        onDragEnd={handleModuleDragEnd}
+                        onDragOver={(e) => handleModuleDragOver(e, index)}
+                        onDrop={(e) => {
+                          const startIndex = course.modules.findIndex(m => m.id === module.id)
+                          handleModuleDrop(e, index, startIndex)
+                        }}
+                        className={`p-4 rounded-lg cursor-pointer transition-colors ${activeModuleId === module.id ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50 border border-gray-100'}`}
+                        style={{ opacity: dragging ? 0.5 : 1 }}
                       >
                         <div className="flex justify-between items-center">
                           <div onClick={() => setActiveModuleId(module.id)} className="flex-1 cursor-pointer">
-                            <h4 className="font-medium text-gray-900">{module.title}</h4>
-                            <p className="text-sm text-gray-600">{module.tasks.length} 个任务</p>
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span className="text-blue-600 font-medium">{index + 1}</span>
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-gray-800">{module.title}</h4>
+                                <p className="text-sm text-gray-600">{module.tasks.length} 个任务</p>
+                              </div>
+                            </div>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeleteModule(module.id)
-                            }}
-                            className="px-2 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600 ml-2"
-                          >
-                            删除
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <div className="text-gray-400 cursor-grab">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteModule(module.id)
+                              }}
+                              className="px-2 py-1 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600 transition-colors"
+                              title="删除模块"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
                     {course.modules.length === 0 && (
                       <div className="text-center py-8 text-gray-500">
-                        点击添加模块开始创建课程
+                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                          </svg>
+                        </div>
+                        <p>点击添加模块开始创建课程</p>
                       </div>
                     )}
                   </div>
@@ -576,16 +688,16 @@ export default function CreateCoursePage() {
 
               {/* 右侧模块和任务编辑 */}
               <div className="lg:col-span-2">
-                <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                   {course.modules.map((module) => (
                     <div key={module.id} className={activeModuleId === module.id ? '' : 'hidden'}>
-                      <div className="mb-6">
+                      <div className="mb-8">
                         <div className="flex justify-between items-center mb-4">
-                          <h3 className="text-lg font-semibold text-gray-900">模块信息</h3>
+                          <h3 className="text-lg font-semibold text-gray-800">模块信息</h3>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">模块标题</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">模块标题 *</label>
                             <input
                               type="text"
                               value={module.title}
@@ -617,32 +729,62 @@ export default function CreateCoursePage() {
 
                       <div className="mb-4">
                         <div className="flex justify-between items-center mb-4">
-                          <h3 className="text-lg font-semibold text-gray-900">任务列表</h3>
+                          <h3 className="text-lg font-semibold text-gray-800">任务列表</h3>
                           <button
                             onClick={() => handleAddTask(module.id)}
-                            className="px-3 py-1 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600"
+                            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors flex items-center gap-1 shadow-sm"
                           >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
                             添加任务
                           </button>
                         </div>
                         <div className="space-y-4">
-                          {module.tasks.map((task) => (
-                            <div key={task.id} className="border border-gray-200 rounded-md p-4">
-                              <div className="flex justify-between items-start mb-3">
-                                <h4 className="font-medium text-gray-900">{task.title}</h4>
+                          {module.tasks.map((task, taskIndex) => (
+                            <div 
+                              key={task.id} 
+                              className="border border-gray-200 rounded-lg p-5 hover:border-gray-300 transition-colors"
+                            >
+                              <div className="flex justify-between items-start mb-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <span className="text-green-600 font-medium">{taskIndex + 1}</span>
+                                  </div>
+                                  <h4 className="font-medium text-gray-800">{task.title}</h4>
+                                </div>
                                 <div className="flex space-x-2">
-                                  <button className="px-2 py-1 bg-yellow-500 text-white rounded-md text-xs hover:bg-yellow-600">
+                                  <button className="px-2 py-1 bg-yellow-500 text-white rounded-lg text-xs hover:bg-yellow-600 transition-colors flex items-center gap-1">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                    </svg>
                                     编辑
                                   </button>
                                   <button 
                                     onClick={() => handleDeleteTask(module.id, task.id)}
-                                    className="px-2 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600"
+                                    className="px-2 py-1 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600 transition-colors flex items-center gap-1"
                                   >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
                                     删除
                                   </button>
                                 </div>
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">任务类型</label>
+                                  <select
+                                    value={task.taskType || 'theory'}
+                                    onChange={(e) => handleTaskUpdate(module.id, task.id, 'taskType', e.target.value as any)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    <option value="theory">理论学习</option>
+                                    <option value="practice">实践操作</option>
+                                    <option value="quiz">测验</option>
+                                    <option value="discussion">讨论</option>
+                                  </select>
+                                </div>
                                 <div>
                                   <label className="block text-sm font-medium text-gray-700 mb-1">任务状态</label>
                                   <select
@@ -684,13 +826,62 @@ export default function CreateCoursePage() {
                                     placeholder="每行一个要求"
                                   />
                                 </div>
+                                {/* 测验任务配置 */}
+                                {(task.taskType === 'quiz') && (
+                                  <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">测验问题</label>
+                                    <textarea
+                                      value={task.quizQuestions?.map(q => `${q.question}\n${q.options?.join('\n')}\n${q.correctAnswer}`).join('\n\n') || ''}
+                                      onChange={(e) => {
+                                        const lines = e.target.value.split('\n');
+                                        const questions: any[] = [];
+                                        let currentQuestion: any = { question: '', options: [] as string[], correctAnswer: '' };
+                                        
+                                        for (const line of lines) {
+                                          if (line.trim() === '' && currentQuestion.question) {
+                                            questions.push(currentQuestion);
+                                            currentQuestion = { question: '', options: [] as string[], correctAnswer: '' };
+                                          } else if (!currentQuestion.question) {
+                                            currentQuestion.question = line;
+                                          } else if (!currentQuestion.correctAnswer) {
+                                            currentQuestion.options.push(line);
+                                          } else {
+                                            currentQuestion.correctAnswer = line;
+                                          }
+                                        }
+                                        
+                                        if (currentQuestion.question) {
+                                          questions.push(currentQuestion);
+                                        }
+                                        
+                                        handleTaskUpdate(module.id, task.id, 'quizQuestions', questions);
+                                      }}
+                                      rows={6}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      placeholder="问题1\n选项A\n选项B\n选项C\n正确答案\n\n问题2\n..."
+                                    />
+                                  </div>
+                                )}
+                                {/* 讨论任务配置 */}
+                                {(task.taskType === 'discussion') && (
+                                  <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">讨论主题</label>
+                                    <input
+                                      type="text"
+                                      value={task.discussionTopic || ''}
+                                      onChange={(e) => handleTaskUpdate(module.id, task.id, 'discussionTopic', e.target.value)}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      placeholder="输入讨论主题"
+                                    />
+                                  </div>
+                                )}
                                 <div className="md:col-span-2">
                                   <label className="block text-sm font-medium text-gray-700 mb-3">富媒体资源</label>
                                   
                                   {/* 资源列表 */}
                                   {task.resources && task.resources.length > 0 && (
                                     <div className="space-y-2 mb-4">
-                                      {task.resources.map((resource, resourceIndex) => (
+                                      {task.resources.map((resource) => (
                                         <div key={resource.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-md border border-gray-200">
                                           <div className="flex items-center gap-3">
                                             <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
@@ -764,8 +955,13 @@ export default function CreateCoursePage() {
                             </div>
                           ))}
                           {module.tasks.length === 0 && (
-                            <div className="text-center py-4 text-gray-500">
-                              点击添加任务
+                            <div className="text-center py-6 text-gray-500">
+                              <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                              </div>
+                              <p>点击添加任务</p>
                             </div>
                           )}
                         </div>
@@ -774,7 +970,22 @@ export default function CreateCoursePage() {
                   ))}
                   {course.modules.length === 0 && (
                     <div className="text-center py-16 text-gray-500">
-                      点击左侧添加模块开始创建课程
+                      <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2">开始创建课程</h3>
+                      <p className="mb-6">点击左侧添加模块开始创建课程</p>
+                      <button
+                        onClick={handleAddModule}
+                        className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm mx-auto"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        添加第一个模块
+                      </button>
                     </div>
                   )}
                 </div>

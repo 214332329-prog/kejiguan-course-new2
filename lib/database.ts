@@ -277,9 +277,12 @@ export const taskService = {
   async createTask(task: {
     module_id: string;
     title: string;
+    task_type: 'theory' | 'practice' | 'quiz' | 'discussion';
     status: 'completed' | 'ongoing' | 'pending';
     duration?: string;
     content?: string;
+    quiz_questions?: any;
+    discussion_topic?: string;
   }): Promise<Task | null> {
     const id = `task-${Date.now()}`;
     const { data, error } = await supabase
@@ -288,9 +291,12 @@ export const taskService = {
         id,
         module_id: task.module_id,
         title: task.title,
+        task_type: task.task_type,
         content: task.content,
         status: task.status,
         duration: task.duration,
+        quiz_questions: task.quiz_questions,
+        discussion_topic: task.discussion_topic,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
@@ -324,6 +330,9 @@ export const taskService = {
     if (updates.content !== undefined) updateData.content = updates.content;
     if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.duration !== undefined) updateData.duration = updates.duration;
+    if (updates.taskType !== undefined) updateData.task_type = updates.taskType;
+    if (updates.quizQuestions !== undefined) updateData.quiz_questions = updates.quizQuestions;
+    if (updates.discussionTopic !== undefined) updateData.discussion_topic = updates.discussionTopic;
     
     const { data, error } = await supabase
       .from('tasks')

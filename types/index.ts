@@ -1,6 +1,7 @@
 export interface Task {
   id: string
   title: string
+  taskType: 'theory' | 'practice' | 'quiz' | 'discussion'
   status: 'completed' | 'ongoing' | 'pending'
   duration?: string
   content?: string
@@ -10,6 +11,8 @@ export interface Task {
   module_id?: string
   created_at?: string
   updated_at?: string
+  quizQuestions?: QuizQuestion[]
+  discussionTopic?: string
 }
 
 export interface Module {
@@ -75,4 +78,10 @@ export interface Course {
   totalTasks: number
   created_at?: string
   updated_at?: string
+}
+
+export interface QuizQuestion {
+  question: string
+  options: string[]
+  correctAnswer: string
 }

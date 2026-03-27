@@ -24,6 +24,7 @@ export const courseData: Course = {
         {
           id: 'task-1-1',
           title: '课时1：调研方法概述',
+          taskType: 'theory',
           status: 'completed',
           duration: '45分钟',
           content: '本课时将介绍科技馆调研的基本方法和流程。我们将学习如何制定调研计划、设计调研问卷、以及如何进行有效的实地观察。通过理论学习，你将了解调研的科学性和系统性，为后续的实地调研打下坚实基础。',
@@ -41,6 +42,7 @@ export const courseData: Course = {
         {
           id: 'task-1-2',
           title: '课时2：访谈技巧学习',
+          taskType: 'theory',
           status: 'ongoing',
           duration: '45分钟',
           content: '访谈是获取深度信息的重要方法。本课时将教授访谈的技巧，包括如何设计访谈问题、如何与受访者建立良好关系、如何记录和整理访谈内容。通过案例分析和角色扮演，你将掌握专业的访谈技能。',
@@ -66,6 +68,7 @@ export const courseData: Course = {
         {
           id: 'task-2-1',
           title: '课时3：科技馆展品观察',
+          taskType: 'practice',
           status: 'pending',
           duration: '90分钟',
           content: '进入科技馆，选择2-3个感兴趣的展品进行深度观察。记录展品的外观设计、交互方式、展示内容、观众反应等。通过系统观察，发现展品的优点和可以改进的地方。',
@@ -84,6 +87,7 @@ export const courseData: Course = {
         {
           id: 'task-2-2',
           title: '课时4：观众访谈调研',
+          taskType: 'practice',
           status: 'pending',
           duration: '90分钟',
           content: '在科技馆内寻找不同年龄段的观众进行访谈。了解他们对展品的看法、参观体验、以及改进建议。通过访谈收集用户的真实需求和痛点，为后续的创新设计提供依据。',
@@ -110,6 +114,7 @@ export const courseData: Course = {
         {
           id: 'task-3-1',
           title: '课时5：问题分析与创意构思',
+          taskType: 'practice',
           status: 'pending',
           duration: '60分钟',
           content: '基于前期的调研数据，分析发现的问题和用户痛点。运用创新思维方法，进行头脑风暴，提出多个创新解决方案。学习如何评估和筛选创意，确定最终的设计方向。',
@@ -128,6 +133,7 @@ export const courseData: Course = {
         {
           id: 'task-3-2',
           title: '课时6：方案撰写与展示',
+          taskType: 'practice',
           status: 'pending',
           duration: '90分钟',
           content: '将创新方案整理成完整的调研报告。报告应包括问题背景、调研方法、调研发现、创新方案、设计说明等内容。学习如何制作展示PPT，准备最终的成果汇报。',

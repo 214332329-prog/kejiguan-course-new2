@@ -20,6 +20,7 @@ const mockCourse: Course = {
         {
           id: 'task-1',
           title: '调研方法概述',
+          taskType: 'theory',
           status: 'ongoing',
           duration: '45分钟',
           content: '调研方法是一种系统的、有目的的信息收集和分析方法...',
@@ -53,6 +54,7 @@ const mockCourse: Course = {
         {
           id: 'task-2',
           title: '访谈技巧学习',
+          taskType: 'theory',
           status: 'pending',
           duration: '60分钟',
           content: '访谈是调研中常用的方法之一...'
@@ -67,12 +69,14 @@ const mockCourse: Course = {
         {
           id: 'task-3',
           title: '实地考察准备',
+          taskType: 'practice',
           status: 'pending',
           duration: '30分钟'
         },
         {
           id: 'task-4',
           title: '实地考察执行',
+          taskType: 'practice',
           status: 'pending',
           duration: '90分钟'
         }
@@ -192,6 +196,7 @@ export default function EditCoursePage() {
     const newTask: Task = {
       id: `task-${module.tasks.length + 1}`,
       title: `新任务 ${module.tasks.length + 1}`,
+      taskType: 'theory',
       status: 'pending',
       duration: '30分钟'
     }
@@ -246,6 +251,7 @@ export default function EditCoursePage() {
                 // 更新现有任务
                 await taskService.updateTask(task.id, {
                   title: task.title,
+                  taskType: task.taskType,
                   status: task.status,
                   duration: task.duration,
                   content: task.content
@@ -255,6 +261,7 @@ export default function EditCoursePage() {
                 await taskService.createTask({
                   module_id: module.id,
                   title: task.title,
+                  task_type: task.taskType,
                   status: task.status,
                   duration: task.duration,
                   content: task.content
@@ -276,6 +283,7 @@ export default function EditCoursePage() {
                 await taskService.createTask({
                   module_id: savedModule.id,
                   title: task.title,
+                  task_type: task.taskType,
                   status: task.status,
                   duration: task.duration,
                   content: task.content
