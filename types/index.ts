@@ -29,6 +29,7 @@ export interface Resource {
   type: 'doc' | 'video' | 'pdf' | 'link'
   size?: string
   url?: string
+  content?: string
 }
 
 export interface Message {

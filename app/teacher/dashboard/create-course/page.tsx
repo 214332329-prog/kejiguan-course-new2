@@ -2,9 +2,139 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Course, Module, Task } from '@/types'
+import { Course, Module, Task, Resource } from '@/types'
 import { courseService, moduleService, taskService } from '@/lib/database'
 import TeacherAIAssistant from '@/components/TeacherAIAssistant'
+
+// 资源添加按钮组件
+interface ResourceAddButtonProps {
+  type: 'link' | 'doc' | 'video' | 'pdf'
+  label: string
+  icon: string
+  color: 'blue' | 'orange' | 'purple' | 'gray'
+  onAdd: (resource: Resource) => void
+}
+
+function ResourceAddButton({ type, label, color, onAdd }: ResourceAddButtonProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [formData, setFormData] = useState({ name: '', url: '', content: '' })
+
+  const colorClasses = {
+    blue: 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200',
+    orange: 'bg-orange-100 text-orange-700 hover:bg-orange-200 border-orange-200',
+    purple: 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200',
+    gray: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200'
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!formData.name.trim()) return
+
+    const resource: Resource = {
+      id: `resource-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: formData.name,
+      type: type
+    }
+
+    if (type === 'link' && formData.url) {
+      resource.url = formData.url
+    } else if (type === 'doc' && formData.content) {
+      resource.content = formData.content
+      resource.size = `${formData.content.length} 字符`
+    } else {
+      resource.size = type === 'video' ? '10MB' : '2MB'
+    }
+
+    onAdd(resource)
+    setIsModalOpen(false)
+    setFormData({ name: '', url: '', content: '' })
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setIsModalOpen(true)}
+        className={`px-3 py-2 rounded-lg text-sm transition-colors border flex items-center gap-2 ${colorClasses[color]}`}
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        {label}
+      </button>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-[90vw]">
+            <h3 className="text-lg font-semibold mb-4">{label}</h3>
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  资源名称 *
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={`请输入${label.replace('添加', '')}名称`}
+                  required
+                />
+              </div>
+
+              {type === 'link' && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    网址 *
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.url}
+                    onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="https://..."
+                    required
+                  />
+                </div>
+              )}
+
+              {type === 'doc' && label === '添加文本' && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    文本内容 *
+                  </label>
+                  <textarea
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={4}
+                    placeholder="请输入文本内容"
+                    required
+                  />
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                >
+                  确认添加
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
 
 export default function CreateCoursePage() {
   const router = useRouter()
@@ -190,16 +320,65 @@ export default function CreateCoursePage() {
         totalTasks: calculateTotalTasks()
       }
       
-      // 保存课程到数据库
-      const savedCourse = await courseService.createCourse({
-        title: updatedCourse.title,
-        description: updatedCourse.description,
-        totalDuration: updatedCourse.totalDuration,
-        totalTasks: updatedCourse.totalTasks
-      })
+      // 尝试保存课程到数据库
+      let savedCourse = null
+      try {
+        savedCourse = await courseService.createCourse({
+          title: updatedCourse.title,
+          description: updatedCourse.description,
+          totalDuration: updatedCourse.totalDuration,
+          totalTasks: updatedCourse.totalTasks
+        })
+      } catch (dbError) {
+        console.warn('数据库保存失败，使用本地存储:', dbError)
+      }
       
-      if (savedCourse) {
-        // 保存模块
+      // 如果数据库保存失败，使用本地存储
+      if (!savedCourse) {
+        savedCourse = {
+          ...updatedCourse,
+          id: `course-${Date.now()}`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+        
+        // 保存到本地存储
+        const existingCourses = JSON.parse(localStorage.getItem('courses') || '[]')
+        existingCourses.push(savedCourse)
+        localStorage.setItem('courses', JSON.stringify(existingCourses))
+        
+        // 保存模块和任务到本地存储
+        const existingModules = JSON.parse(localStorage.getItem('modules') || '[]')
+        const existingTasks = JSON.parse(localStorage.getItem('tasks') || '[]')
+        
+        for (const module of updatedCourse.modules) {
+          const moduleWithId = {
+            ...module,
+            id: `module-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            course_id: savedCourse.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+          existingModules.push(moduleWithId)
+          
+          for (const task of module.tasks) {
+            const taskWithId = {
+              ...task,
+              id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              module_id: moduleWithId.id,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+            existingTasks.push(taskWithId)
+          }
+        }
+        
+        localStorage.setItem('modules', JSON.stringify(existingModules))
+        localStorage.setItem('tasks', JSON.stringify(existingTasks))
+        
+        console.log('课程已保存到本地存储:', savedCourse)
+      } else {
+        // 数据库保存成功，继续保存模块和任务
         for (const module of updatedCourse.modules) {
           const savedModule = await moduleService.createModule({
             course_id: savedCourse.id,
@@ -209,7 +388,6 @@ export default function CreateCoursePage() {
           })
           
           if (savedModule) {
-            // 保存任务
             for (const task of module.tasks) {
               await taskService.createTask({
                 module_id: savedModule.id,
@@ -223,15 +401,13 @@ export default function CreateCoursePage() {
         }
         
         console.log('课程创建成功:', savedCourse)
-        setSaveSuccess(true)
-        // 2秒后跳转到仪表盘
-        setTimeout(() => {
-          router.push('/teacher/dashboard')
-        }, 2000)
-      } else {
-        console.error('课程创建失败')
-        alert('课程创建失败，请重试')
       }
+      
+      setSaveSuccess(true)
+      // 2秒后跳转到仪表盘
+      setTimeout(() => {
+        router.push('/teacher/dashboard')
+      }, 2000)
     } catch (error) {
       console.error('课程创建错误:', error)
       alert('创建课程时发生错误，请重试')
@@ -514,23 +690,34 @@ export default function CreateCoursePage() {
                                   {/* 资源列表 */}
                                   {task.resources && task.resources.length > 0 && (
                                     <div className="space-y-2 mb-4">
-                                      {task.resources.map((resource) => (
-                                        <div key={resource.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
+                                      {task.resources.map((resource, resourceIndex) => (
+                                        <div key={resource.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-md border border-gray-200">
                                           <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                              resource.type === 'link' ? 'bg-blue-100' :
+                                              resource.type === 'video' ? 'bg-purple-100' :
+                                              resource.type === 'pdf' ? 'bg-red-100' :
+                                              'bg-gray-100'
+                                            }`}>
                                               {resource.type === 'link' && <span className="text-blue-600 text-xs font-bold">URL</span>}
-                                              {resource.type === 'doc' && <span className="text-orange-600 text-xs font-bold">PPT</span>}
+                                              {resource.type === 'doc' && <span className="text-orange-600 text-xs font-bold">DOC</span>}
                                               {resource.type === 'video' && <span className="text-purple-600 text-xs font-bold">视频</span>}
-                                              {resource.type === 'doc' && <span className="text-gray-600 text-xs font-bold">文本</span>}
+                                              {resource.type === 'pdf' && <span className="text-red-600 text-xs font-bold">PDF</span>}
                                             </div>
-                                            <div>
-                                              <p className="text-sm font-medium text-gray-800">{resource.name}</p>
-                                              {resource.type === 'link' && <p className="text-xs text-blue-600">{resource.url}</p>}
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-sm font-medium text-gray-800 truncate">{resource.name}</p>
+                                              {resource.type === 'link' && resource.url && (
+                                                <a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline truncate block max-w-[200px]">
+                                                  {resource.url}
+                                                </a>
+                                              )}
+                                              {resource.size && <p className="text-xs text-gray-500">{resource.size}</p>}
                                             </div>
                                           </div>
                                           <button
                                             onClick={() => handleRemoveResource(module.id, task.id, resource.id)}
-                                            className="text-red-500 hover:text-red-700 transition-colors"
+                                            className="text-red-500 hover:text-red-700 transition-colors p-1"
+                                            title="删除资源"
                                           >
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -541,86 +728,36 @@ export default function CreateCoursePage() {
                                     </div>
                                   )}
                                   
-                                  {/* 添加资源按钮 */}
-                                  <div className="flex flex-wrap gap-3">
-                                    <button
-                                      onClick={() => {
-                                        const url = prompt('请输入网址:');
-                                        if (url) {
-                                          handleAddResource(module.id, task.id, {
-                                            id: `resource-${Date.now()}`,
-                                            name: '外部链接',
-                                            type: 'link',
-                                            url: url
-                                          });
-                                        }
-                                      }}
-                                      className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center gap-2"
-                                    >
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                      </svg>
-                                      添加网址
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        const name = prompt('请输入PPT名称:');
-                                        if (name) {
-                                          handleAddResource(module.id, task.id, {
-                                            id: `resource-${Date.now()}`,
-                                            name: name,
-                                            type: 'doc',
-                                            size: '2MB'
-                                          });
-                                        }
-                                      }}
-                                      className="px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors flex items-center gap-2"
-                                    >
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                      </svg>
-                                      添加PPT
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        const name = prompt('请输入视频名称:');
-                                        if (name) {
-                                          handleAddResource(module.id, task.id, {
-                                            id: `resource-${Date.now()}`,
-                                            name: name,
-                                            type: 'video',
-                                            size: '10MB'
-                                          });
-                                        }
-                                      }}
-                                      className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors flex items-center gap-2"
-                                    >
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                      </svg>
-                                      添加视频
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        const name = prompt('请输入文本名称:');
-                                        const content = prompt('请输入文本内容:');
-                                        if (name && content) {
-                                          handleAddResource(module.id, task.id, {
-                                            id: `resource-${Date.now()}`,
-                                            name: name,
-                                            type: 'doc',
-                                            content: content
-                                          });
-                                        }
-                                      }}
-                                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
-                                    >
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                      </svg>
-                                      添加文本
-                                    </button>
+                                  {/* 添加资源按钮组 */}
+                                  <div className="flex flex-wrap gap-2">
+                                    <ResourceAddButton
+                                      type="link"
+                                      label="添加网址"
+                                      icon="link"
+                                      color="blue"
+                                      onAdd={(resource) => handleAddResource(module.id, task.id, resource)}
+                                    />
+                                    <ResourceAddButton
+                                      type="doc"
+                                      label="添加PPT"
+                                      icon="ppt"
+                                      color="orange"
+                                      onAdd={(resource) => handleAddResource(module.id, task.id, resource)}
+                                    />
+                                    <ResourceAddButton
+                                      type="video"
+                                      label="添加视频"
+                                      icon="video"
+                                      color="purple"
+                                      onAdd={(resource) => handleAddResource(module.id, task.id, resource)}
+                                    />
+                                    <ResourceAddButton
+                                      type="doc"
+                                      label="添加文本"
+                                      icon="text"
+                                      color="gray"
+                                      onAdd={(resource) => handleAddResource(module.id, task.id, resource)}
+                                    />
                                   </div>
                                 </div>
                               </div>
@@ -644,43 +781,8 @@ export default function CreateCoursePage() {
               </div>
             </div>
 
-            {/* 底部保存按钮 */}
-            <div className="mt-8 flex justify-end">
-              {saveSuccess ? (
-                <button
-                  disabled
-                  className="px-6 py-3 bg-green-500 text-white rounded-md flex items-center gap-2 text-lg font-medium"
-                >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                  </svg>
-                  创建成功
-                </button>
-              ) : (
-                <button
-                  onClick={handleSaveCourse}
-                  disabled={saving}
-                  className="px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-lg font-medium"
-                >
-                  {saving ? (
-                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  )}
-                  {saving ? '创建中...' : '保存课程'}
-                </button>
-              )}
-            </div>
-
             {/* AI助手 */}
-            <div className="mt-8">
-              <TeacherAIAssistant currentPage="create-course" />
-            </div>
+            <TeacherAIAssistant currentPage="create-course" />
           </div>
         </main>
       </div>

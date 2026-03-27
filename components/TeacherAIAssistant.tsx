@@ -67,6 +67,7 @@ interface TeacherAIAssistantProps {
 }
 
 export default function TeacherAIAssistant({ currentPage = '' }: TeacherAIAssistantProps) {
+  const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -134,65 +135,102 @@ export default function TeacherAIAssistant({ currentPage = '' }: TeacherAIAssist
     setInputMessage(question)
   }
 
-  return (
-    <div className="bg-white border-t border-gray-200 flex flex-col">
-      {/* 聊天区域 */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-        {messages.map((msg) => (
-          <div key={msg.id} className={`flex gap-3 ${msg.type === 'user' ? 'flex-row-reverse' : ''}`}>
-            {msg.type === 'ai' && (
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-              </div>
-            )}
-            {msg.type === 'user' && (
-              <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-            )}
-            <div className={`max-w-[80%] px-4 py-3 rounded-lg text-sm ${msg.type === 'ai' ? 'bg-gray-50 border border-gray-200 text-gray-700' : 'bg-indigo-100 text-indigo-800'}`}>
-              {msg.content}
-            </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* 快捷问题 */}
-      <div className="px-6 py-3 flex gap-3 overflow-x-auto border-t border-gray-100">
-        {quickQuestions.map((question, index) => (
-          <button
-            key={index}
-            onClick={() => handleQuickQuestion(question)}
-            className="px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm whitespace-nowrap hover:bg-blue-100 transition-all transform hover:scale-105 shadow-sm"
-          >
-            {question}
-          </button>
-        ))}
-      </div>
-
-      {/* 输入框 */}
-      <div className="px-6 py-4 flex gap-3 border-t border-gray-100">
-        <input
-          type="text"
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-          placeholder="输入你的问题..."
-          className="flex-1 px-4 py-3 border-2 border-blue-200 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
-        />
+  // 折叠状态 - 只显示切换按钮
+  if (!isOpen) {
+    return (
+      <div className="fixed bottom-6 right-6 z-50">
         <button
-          onClick={handleSendMessage}
-          className="w-10 h-10 bg-blue-600 text-white rounded-lg flex items-center justify-center hover:bg-blue-700 transition-all transform hover:scale-105 shadow-md"
+          onClick={() => setIsOpen(true)}
+          className="flex items-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-full shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
           </svg>
+          <span className="text-sm font-medium">AI助手</span>
         </button>
+      </div>
+    )
+  }
+
+  // 展开状态
+  return (
+    <div className="fixed bottom-6 right-6 z-50 w-96 max-w-[calc(100vw-3rem)]">
+      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col max-h-[600px]">
+        {/* 头部 */}
+        <div className="bg-purple-600 px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-white font-semibold text-sm">AI课程开发助手</h3>
+              <p className="text-purple-200 text-xs">随时为你提供帮助</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsOpen(false)}
+            className="text-white/80 hover:text-white transition-colors p-1"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* 聊天区域 */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 max-h-[350px] min-h-[200px]">
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex gap-2 ${msg.type === 'user' ? 'flex-row-reverse' : ''}`}>
+              <div className={`max-w-[85%] px-3 py-2 rounded-xl text-sm ${
+                msg.type === 'ai' 
+                  ? 'bg-gray-100 text-gray-800 rounded-tl-none' 
+                  : 'bg-purple-500 text-white rounded-tr-none'
+              }`}>
+                {msg.content}
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* 快捷问题 */}
+        <div className="px-4 py-2 border-t border-gray-100">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {quickQuestions.map((question, index) => (
+              <button
+                key={index}
+                onClick={() => handleQuickQuestion(question)}
+                className="px-3 py-1.5 bg-purple-50 text-purple-700 rounded-full text-xs whitespace-nowrap hover:bg-purple-100 transition-colors border border-purple-200"
+              >
+                {question}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 输入框 */}
+        <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              placeholder="输入你的问题..."
+              className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+            />
+            <button
+              onClick={handleSendMessage}
+              className="w-9 h-9 bg-purple-600 text-white rounded-lg flex items-center justify-center hover:bg-purple-700 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
