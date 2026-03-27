@@ -12,6 +12,7 @@ export default function TeacherDashboard() {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [courseMenuOpen, setCourseMenuOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -192,15 +193,48 @@ export default function TeacherDashboard() {
         {/* 侧边导航 */}
         <aside className="w-64 bg-white shadow-sm hidden md:block h-[calc(100vh-4rem)] sticky top-16">
           <nav className="mt-6 px-4 space-y-1">
-            <a
-              href="/teacher/dashboard"
-              className="flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium bg-blue-50 text-blue-700 border-l-4 border-blue-500 transition-all hover:bg-blue-100"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              课程管理
-            </a>
+            <div className="relative">
+              <button
+                onClick={() => setCourseMenuOpen(!courseMenuOpen)}
+                className="flex items-center justify-between w-full px-4 py-3 rounded-lg text-base font-medium bg-blue-50 text-blue-700 border-l-4 border-blue-500 transition-all hover:bg-blue-100"
+              >
+                <div className="flex items-center space-x-3">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  课程管理
+                </div>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {courseMenuOpen && (
+                <div className="absolute left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                {courses.length > 0 ? (
+                  courses.map((course) => (
+                    <div key={course.id} className="p-2">
+                      <div className="font-medium text-gray-700 px-4 py-2 hover:bg-gray-50 rounded">
+                        {course.title}
+                      </div>
+                      {course.modules?.map((module, index) => (
+                        <a
+                          key={module.id}
+                          href={`/teacher/dashboard/edit-course?id=${course.id}&module=${index}`}
+                          className="block px-8 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded"
+                        >
+                          {module.title}
+                        </a>
+                      ))}
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-sm text-gray-500">
+                    暂无课程
+                  </div>
+                )}
+                </div>
+              )}
+            </div>
             <a
               href="/teacher/analytics"
               className="flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
@@ -232,15 +266,6 @@ export default function TeacherDashboard() {
                   <h2 className="text-2xl font-bold text-gray-800 mb-1">我的课程</h2>
                   <p className="text-gray-600">管理和创建您的课程内容</p>
                 </div>
-                <button
-                onClick={handleCreateCourse}
-                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-sm hover:shadow-md flex items-center gap-2 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                创建新课程
-              </button>
               </div>
             </div>
 
