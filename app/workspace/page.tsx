@@ -6,15 +6,24 @@ import { useRouter } from 'next/navigation'
 import LeftSidebar from '@/components/LeftSidebar'
 import CenterPanel from '@/components/CenterPanel'
 import RightSidebar from '@/components/RightSidebar'
-import { courseData, getCompletedTasksCount, getTotalTasksCount, getTaskById, getModuleById } from '@/lib/course-data'
-import { Task, Module } from '@/types'
+import { getCompletedTasksCount, getTotalTasksCount, getTaskById, getModuleById } from '@/lib/course-data'
+import { Task, Module, Course } from '@/types'
+import { courseService } from '@/lib/database'
 
 export default function WorkspacePage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [selectedModule, setSelectedModule] = useState<Module | null>(null)
-  const [activeModuleId, setActiveModuleId] = useState<string>('module-1')
+  const [activeModuleId, setActiveModuleId] = useState<string>('')
+  const [courseData, setCourseData] = useState<Course>({
+    id: '',
+    title: '',
+    description: '',
+    modules: [],
+    totalDuration: '',
+    totalTasks: 0
+  })
   const router = useRouter()
 
   // 计算进度
@@ -23,22 +32,63 @@ export default function WorkspacePage() {
 
   useEffect(() => {
     checkUser()
+    fetchCourseData()
+  }, [])
+
+  const fetchCourseData = async () => {
+    try {
+      // 尝试从数据库获取课程数据
+      const courses = await courseService.getCourses()
+      if (courses.length > 0) {
+        // 使用第一个课程
+        setCourseData(courses[0])
+        setupInitialSelection(courses[0])
+      } else {
+        // 从本地存储获取
+        const localCourses = JSON.parse(localStorage.getItem('courses') || '[]')
+        if (localCourses.length > 0) {
+          setCourseData(localCourses[0])
+          setupInitialSelection(localCourses[0])
+        }
+      }
+    } catch (error) {
+      console.error('获取课程数据失败:', error)
+      // 从本地存储获取
+      const localCourses = JSON.parse(localStorage.getItem('courses') || '[]')
+      if (localCourses.length > 0) {
+        setCourseData(localCourses[0])
+        setupInitialSelection(localCourses[0])
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const setupInitialSelection = (course: Course) => {
     // 默认选中第一个进行中的任务
-    const currentTask = courseData.modules
+    const currentTask = course.modules
       .flatMap(m => m.tasks)
       .find(t => t.status === 'ongoing')
     if (currentTask) {
       setSelectedTask(currentTask)
       // 找到包含这个任务的模块
-      for (const module of courseData.modules) {
+      for (const module of course.modules) {
         if (module.tasks.find(t => t.id === currentTask.id)) {
           setSelectedModule(module)
           setActiveModuleId(module.id)
           break
         }
       }
+    } else if (course.modules.length > 0) {
+      // 如果没有进行中的任务，选中第一个模块的第一个任务
+      const firstModule = course.modules[0]
+      setSelectedModule(firstModule)
+      setActiveModuleId(firstModule.id)
+      if (firstModule.tasks.length > 0) {
+        setSelectedTask(firstModule.tasks[0])
+      }
     }
-  }, [])
+  }
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()

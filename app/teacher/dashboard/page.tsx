@@ -33,7 +33,18 @@ export default function TeacherDashboard() {
     setLoading(true)
     try {
       const coursesData = await courseService.getCourses()
-      setCourses(coursesData)
+      
+      // 如果数据库返回空数组，检查本地存储
+      if (coursesData.length === 0) {
+        const localCourses = JSON.parse(localStorage.getItem('courses') || '[]')
+        if (localCourses.length > 0) {
+          setCourses(localCourses)
+        } else {
+          setCourses(coursesData)
+        }
+      } else {
+        setCourses(coursesData)
+      }
     } catch (error) {
       console.error('获取课程失败:', error)
       // 从本地存储获取数据作为备选
