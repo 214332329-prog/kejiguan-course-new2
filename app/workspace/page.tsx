@@ -245,6 +245,7 @@ export default function WorkspacePage() {
             onSelectTask={handleSelectTask}
             completedTasks={completedTasks}
             totalTasks={totalTasks}
+            onHideSidebar={() => setShowLeftSidebar(false)}
           />
         )}
         
@@ -254,7 +255,7 @@ export default function WorkspacePage() {
           <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
             <button
               onClick={() => setShowLeftSidebar(!showLeftSidebar)}
-              className="px-3 py-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition flex items-center gap-2"
+              className="px-3 py-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition flex items-center gap-2 hover:shadow-md transform hover:-translate-y-0.5"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showLeftSidebar ? "M11 19l-7-7 7-7m8 14l-7-7 7-7" : "M18 13l-5 5-5-5"} />
@@ -263,7 +264,7 @@ export default function WorkspacePage() {
             </button>
             <button
               onClick={() => setShowRightSidebar(!showRightSidebar)}
-              className="px-3 py-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition flex items-center gap-2"
+              className="px-3 py-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition flex items-center gap-2 hover:shadow-md transform hover:-translate-y-0.5"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showRightSidebar ? "M11 19l-7-7 7-7m8 14l-7-7 7-7" : "M18 13l-5 5-5-5"} />
@@ -286,6 +287,7 @@ export default function WorkspacePage() {
             completedTasks={completedTasks}
             totalTasks={totalTasks}
             user={user}
+            onHideSidebar={() => setShowRightSidebar(false)}
           />
         )}
       </div>

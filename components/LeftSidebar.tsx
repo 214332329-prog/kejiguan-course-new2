@@ -11,6 +11,7 @@ interface LeftSidebarProps {
   onSelectTask?: (task: Task) => void
   completedTasks?: number
   totalTasks?: number
+  onHideSidebar?: () => void
 }
 
 export default function LeftSidebar({
@@ -21,8 +22,10 @@ export default function LeftSidebar({
   onSelectTask = () => {},
   completedTasks = 0,
   totalTasks = 0,
+  onHideSidebar = () => {},
 }: LeftSidebarProps) {
   const [expandedModules, setExpandedModules] = useState<string[]>([])
+  const [showHideHint, setShowHideHint] = useState(false)
 
   const toggleModule = (moduleId: string) => {
     setExpandedModules((prev) =>
@@ -33,7 +36,25 @@ export default function LeftSidebar({
   const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
   return (
-    <aside className="w-72 md:w-64 bg-slate-50 border-r border-slate-200 flex flex-col shrink-0 h-full hidden md:flex">
+    <aside 
+      className="w-72 md:w-64 bg-slate-50 border-r border-slate-200 flex flex-col shrink-0 h-full hidden md:flex relative"
+      onMouseEnter={() => setShowHideHint(true)}
+      onMouseLeave={() => setShowHideHint(false)}
+    >
+      {/* 隐藏提示 */}
+      {showHideHint && onHideSidebar && (
+        <div className="absolute right-0 top-1/2 transform -translate-y-1/2 -translate-x-1/2 z-10">
+          <button
+            onClick={onHideSidebar}
+            className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg shadow-md hover:bg-slate-50 transition-all duration-300 transform hover:translate-x-1"
+          >
+            <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+            </svg>
+            <span className="text-sm text-slate-700">隐藏左侧</span>
+          </button>
+        </div>
+      )}
       {/* 左上：课程地图（60%） */}
       <div className="flex-[60] flex flex-col min-h-0 overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-200 shrink-0">
