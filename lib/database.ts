@@ -375,6 +375,7 @@ export const moduleService = {
     
     // 清除相关缓存
     cache.delete(generateCacheKey('modules', module.course_id));
+    cache.delete(generateCacheKey('courses'));
     return data;
   },
 
@@ -403,6 +404,7 @@ export const moduleService = {
     // 清除相关缓存
     if (data.course_id) {
       cache.delete(generateCacheKey('modules', data.course_id));
+      cache.delete(generateCacheKey('courses'));
     }
     return data;
   },
@@ -429,6 +431,7 @@ export const moduleService = {
     // 清除相关缓存
     if (moduleData && moduleData.course_id) {
       cache.delete(generateCacheKey('modules', moduleData.course_id));
+      cache.delete(generateCacheKey('courses'));
     }
     return true;
   }
@@ -496,6 +499,7 @@ export const taskService = {
     
     // 清除相关缓存
     cache.delete(generateCacheKey('tasks', task.module_id));
+    cache.delete(generateCacheKey('courses'));
     return data;
   },
 
@@ -535,6 +539,7 @@ export const taskService = {
     // 清除相关缓存
     if (taskData && taskData.module_id) {
       cache.delete(generateCacheKey('tasks', taskData.module_id));
+      cache.delete(generateCacheKey('courses'));
     }
     return data;
   },
@@ -561,6 +566,7 @@ export const taskService = {
     // 清除相关缓存
     if (taskData && taskData.module_id) {
       cache.delete(generateCacheKey('tasks', taskData.module_id));
+      cache.delete(generateCacheKey('courses'));
     }
     return true;
   }

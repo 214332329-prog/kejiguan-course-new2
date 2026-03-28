@@ -22,7 +22,7 @@ export default function LeftSidebar({
   completedTasks = 0,
   totalTasks = 0,
 }: LeftSidebarProps) {
-  const [expandedModules, setExpandedModules] = useState<string[]>(['1'])
+  const [expandedModules, setExpandedModules] = useState<string[]>([])
 
   const toggleModule = (moduleId: string) => {
     setExpandedModules((prev) =>

@@ -90,6 +90,13 @@ export default function WorkspacePage() {
     }
   }
 
+  // 当课程数据变化时，重新设置初始选择
+  useEffect(() => {
+    if (courseData.modules.length > 0) {
+      setupInitialSelection(courseData)
+    }
+  }, [courseData])
+
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
