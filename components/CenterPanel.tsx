@@ -173,6 +173,74 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
   }
 
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false)
+  const [zoomLevel, setZoomLevel] = useState(100)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  // 缩放功能
+  const handleZoomIn = () => {
+    if (zoomLevel < 150) {
+      setZoomLevel(zoomLevel + 10)
+    }
+  }
+
+  const handleZoomOut = () => {
+    if (zoomLevel > 70) {
+      setZoomLevel(zoomLevel - 10)
+    }
+  }
+
+  const handleZoomReset = () => {
+    setZoomLevel(100)
+  }
+
+  // 全屏功能
+  const handleFullscreen = () => {
+    if (!isFullscreen) {
+      // 进入全屏
+      const element = document.documentElement as any
+      if (element.requestFullscreen) {
+        element.requestFullscreen()
+      } else if (element.webkitRequestFullscreen) {
+        element.webkitRequestFullscreen()
+      } else if (element.msRequestFullscreen) {
+        element.msRequestFullscreen()
+      }
+      setIsFullscreen(true)
+    } else {
+      // 退出全屏
+      const doc = document as any
+      if (doc.exitFullscreen) {
+        doc.exitFullscreen()
+      } else if (doc.webkitExitFullscreen) {
+        doc.webkitExitFullscreen()
+      } else if (doc.msExitFullscreen) {
+        doc.msExitFullscreen()
+      }
+      setIsFullscreen(false)
+    }
+  }
+
+  // 监听全屏状态变化
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const doc = document as any
+      setIsFullscreen(
+        !!doc.fullscreenElement ||
+        !!doc.webkitFullscreenElement ||
+        !!doc.msFullscreenElement
+      )
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange)
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
+    }
+  }, [])
 
   return (
     <div className="flex-1 flex flex-col bg-white h-full min-w-0 md:min-w-[300px]">
@@ -208,18 +276,50 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
                   </span>
                 </div>
               </div>
-              {/* AI助手切换按钮 - 右上角位置 */}
-              <button
-                onClick={() => setAiAssistantOpen(!aiAssistantOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 border border-purple-300 bg-purple-50 text-purple-600 rounded-lg text-xs hover:bg-purple-100 transition shadow-sm"
-              >
-                <svg className={`w-4 h-4 transition-transform duration-300 ${
-                  aiAssistantOpen ? 'rotate-180' : ''
-                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-                {aiAssistantOpen ? '收起助手' : 'AI助手'}
-              </button>
+              <div className="flex items-center gap-2">
+                {/* 缩放控制 */}
+                <div className="flex items-center gap-1 border border-slate-200 rounded-lg p-1">
+                  <button
+                    onClick={handleZoomOut}
+                    className="px-2 py-1 text-xs hover:bg-slate-100 rounded transition"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                  <span className="px-2 text-xs text-slate-600">{zoomLevel}%</span>
+                  <button
+                    onClick={handleZoomIn}
+                    className="px-2 py-1 text-xs hover:bg-slate-100 rounded transition"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </button>
+                </div>
+                {/* 全屏按钮 */}
+                <button
+                  onClick={handleFullscreen}
+                  className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 bg-white text-slate-600 rounded-lg text-xs hover:bg-slate-50 transition"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
+                  </svg>
+                  {isFullscreen ? '退出全屏' : '全屏'}
+                </button>
+                {/* AI助手切换按钮 */}
+                <button
+                  onClick={() => setAiAssistantOpen(!aiAssistantOpen)}
+                  className="flex items-center gap-2 px-3 py-1.5 border border-purple-300 bg-purple-50 text-purple-600 rounded-lg text-xs hover:bg-purple-100 transition shadow-sm"
+                >
+                  <svg className={`w-4 h-4 transition-transform duration-300 ${
+                    aiAssistantOpen ? 'rotate-180' : ''
+                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  {aiAssistantOpen ? '收起助手' : 'AI助手'}
+                </button>
+              </div>
             </div>
 
             {/* 内容切换标签 */}
@@ -249,7 +349,10 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
             </div>
 
             {/* 内容区域 */}
-            <div className="flex-1 overflow-y-auto px-6 py-6">
+            <div 
+              className="flex-1 overflow-y-auto px-6 py-6 transition-transform duration-300"
+              style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top left', minHeight: '500px' }}
+            >
               {activeTab === 'content' ? (
                 <div className="space-y-6">
                   {/* 学习任务 */}
@@ -430,20 +533,21 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
 
             {/* 课时导航 */}
             <div className="px-6 py-4 border-t border-slate-200 flex justify-between items-center">
-              <div className="flex gap-4">
-                <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:border-blue-400 hover:text-blue-600 transition">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                  上一课
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:border-blue-400 hover:text-blue-600 transition">
-                  下一课
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
+              {/* 左侧：上一课 */}
+              <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:border-blue-400 hover:text-blue-600 transition">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                上一课
+              </button>
+              
+              {/* 右侧：下一课 */}
+              <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:border-blue-400 hover:text-blue-600 transition">
+                下一课
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
           </>
         ) : (
