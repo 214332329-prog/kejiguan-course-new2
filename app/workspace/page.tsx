@@ -9,6 +9,7 @@ import RightSidebar from '@/components/RightSidebar'
 import { getCompletedTasksCount, getTotalTasksCount, getTaskById, getModuleById } from '@/lib/course-data'
 import { Task, Module, Course } from '@/types'
 import { courseService } from '@/lib/database'
+import { cache, generateCacheKey } from '@/lib/cache'
 
 export default function WorkspacePage() {
   const [user, setUser] = useState<any>(null)
@@ -37,18 +38,53 @@ export default function WorkspacePage() {
 
   const fetchCourseData = async () => {
     try {
+      // 清除缓存，确保获取最新数据
+      cache.delete(generateCacheKey('courses'))
       // 尝试从数据库获取课程数据
       const courses = await courseService.getCourses()
+      console.log('从数据库获取的课程数据:', courses)
       if (courses.length > 0) {
         // 使用第一个课程
         setCourseData(courses[0])
         setupInitialSelection(courses[0])
+        // 更新本地存储
+        localStorage.setItem('courses', JSON.stringify(courses))
       } else {
         // 从本地存储获取
         const localCourses = JSON.parse(localStorage.getItem('courses') || '[]')
+        console.log('从本地存储获取的课程数据:', localCourses)
         if (localCourses.length > 0) {
           setCourseData(localCourses[0])
           setupInitialSelection(localCourses[0])
+        } else {
+          // 如果都没有数据，创建默认课程数据
+          const defaultCourse = {
+            id: 'default-course',
+            title: '默认课程',
+            description: '这是一个默认课程',
+            modules: [
+              {
+                id: 'default-module',
+                title: '新模块 1',
+                tasks: [
+                  {
+                    id: 'default-task',
+                    title: '默认任务',
+                    taskType: 'theory' as const,
+                    content: '这是一个默认任务，请开始学习',
+                    status: 'pending' as const,
+                    duration: '45分钟',
+                    requirements: ['完成任务', '提交作业'],
+                    resources: []
+                  }
+                ]
+              }
+            ],
+            totalDuration: '45分钟',
+            totalTasks: 1
+          }
+          setCourseData(defaultCourse)
+          setupInitialSelection(defaultCourse)
         }
       }
     } catch (error) {
@@ -58,6 +94,35 @@ export default function WorkspacePage() {
       if (localCourses.length > 0) {
         setCourseData(localCourses[0])
         setupInitialSelection(localCourses[0])
+      } else {
+        // 如果都没有数据，创建默认课程数据
+        const defaultCourse = {
+          id: 'default-course',
+          title: '默认课程',
+          description: '这是一个默认课程',
+          modules: [
+            {
+              id: 'default-module',
+              title: '新模块 1',
+              tasks: [
+                {
+                  id: 'default-task',
+                  title: '默认任务',
+                  taskType: 'theory' as const,
+                  content: '这是一个默认任务，请开始学习',
+                  status: 'pending' as const,
+                  duration: '45分钟',
+                  requirements: ['完成任务', '提交作业'],
+                  resources: []
+                }
+              ]
+            }
+          ],
+          totalDuration: '45分钟',
+          totalTasks: 1
+        }
+        setCourseData(defaultCourse)
+        setupInitialSelection(defaultCourse)
       }
     } finally {
       setLoading(false)
