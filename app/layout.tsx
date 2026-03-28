@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { VersionProvider } from "@/components/VersionProvider";
+import VersionSwitcher from "@/components/VersionSwitcher";
 
 export const metadata: Metadata = {
   title: "科技馆课程学习平台",
@@ -14,7 +16,10 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className="antialiased">
-        {children}
+        <VersionProvider>
+          {children}
+          <VersionSwitcher />
+        </VersionProvider>
       </body>
     </html>
   );
