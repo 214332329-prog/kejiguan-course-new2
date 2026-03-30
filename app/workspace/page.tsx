@@ -165,18 +165,35 @@ export default function WorkspacePage() {
   }, [courseData])
 
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      setUser(user)
-    } else {
-      router.push('/auth/login')
+    try {
+      const { data, error } = await supabase.auth.getUser()
+      if (error) {
+        console.error('Error getting user:', error)
+        // If auth fails, still load the app with default data
+        setUser(null)
+      } else if (data.user) {
+        setUser(data.user)
+      } else {
+        // No user logged in, still load the app with default data
+        setUser(null)
+      }
+    } catch (error) {
+      console.error('Error in checkUser:', error)
+      // If there's any error, still load the app with default data
+      setUser(null)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/auth/login')
+    try {
+      await supabase.auth.signOut()
+    } catch (error) {
+      console.error('Error signing out:', error)
+    } finally {
+      router.push('/auth/login')
+    }
   }
 
   const handleSelectModule = (moduleId: string) => {
