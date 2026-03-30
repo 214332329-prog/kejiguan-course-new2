@@ -242,343 +242,475 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
     }
   }, [])
 
+  // 模拟PPT数据
+  const pptData = {
+    title: '科技馆调研方法',
+    pages: [
+      { id: 1, title: '课程介绍', content: '科技馆调研方法课程内容概述' },
+      { id: 2, title: '调研目的', content: '明确调研的目标和意义' },
+      { id: 3, title: '调研方法', content: '常用的调研方法介绍' },
+      { id: 4, title: '数据收集', content: '如何有效收集调研数据' },
+      { id: 5, title: '数据分析', content: '调研数据的分析方法' },
+      { id: 6, title: '报告撰写', content: '如何撰写调研报告' },
+    ],
+    currentPage: 2
+  }
+
+  // 模拟任务看板数据
+  const taskBoard = {
+    todo: [
+      { id: 1, title: '完成调研计划', priority: 'high', dueDate: '2026-04-01' },
+      { id: 2, title: '设计调研问卷', priority: 'medium', dueDate: '2026-04-02' },
+    ],
+    inProgress: [
+      { id: 3, title: '科技馆实地考察', priority: 'high', dueDate: '2026-04-03' },
+    ],
+    completed: [
+      { id: 4, title: '学习调研方法理论', priority: 'low', dueDate: '2026-03-28' },
+    ]
+  }
+
+  // 模拟资源模板数据
+  const resourceTemplates = [
+    { id: 1, name: '调研计划模板.docx', type: 'doc', size: '2.5MB' },
+    { id: 2, name: '调研问卷模板.xlsx', type: 'excel', size: '1.8MB' },
+    { id: 3, name: '观察记录表.pdf', type: 'pdf', size: '1.2MB' },
+    { id: 4, name: '调研报告模板.pptx', type: 'ppt', size: '3.5MB' },
+  ]
+
+  const [currentPptPage, setCurrentPptPage] = useState(2)
+  const [pptZoom, setPptZoom] = useState(100)
+
+  // PPT导航功能
+  const handlePptPrev = () => {
+    if (currentPptPage > 1) {
+      setCurrentPptPage(currentPptPage - 1)
+    }
+  }
+
+  const handlePptNext = () => {
+    if (currentPptPage < pptData.pages.length) {
+      setCurrentPptPage(currentPptPage + 1)
+    }
+  }
+
+  // PPT缩放功能
+  const handlePptZoomIn = () => {
+    if (pptZoom < 150) {
+      setPptZoom(pptZoom + 10)
+    }
+  }
+
+  const handlePptZoomOut = () => {
+    if (pptZoom > 70) {
+      setPptZoom(pptZoom - 10)
+    }
+  }
+
+  // PPT全屏功能
+  const handlePptFullscreen = () => {
+    const pptElement = document.getElementById('ppt-container')
+    if (pptElement) {
+      if (!document.fullscreenElement) {
+        pptElement.requestFullscreen().catch(err => {
+          console.error('Error attempting to enable fullscreen:', err)
+        })
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen()
+        }
+      }
+    }
+  }
+
   return (
     <div className="flex-1 flex flex-col bg-white h-full min-w-0 md:min-w-[300px]">
-      {/* 学习中心 */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        {selectedTask ? (
-          <>
-            {/* 课时标题栏 */}
-            <div className="px-6 py-4 border-b border-slate-200">
-              <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
-                {/* 课程信息 */}
-                <div className="flex flex-wrap items-center gap-3 text-sm">
-                  <h2 className="font-medium text-slate-800">{currentModule?.title} · {selectedTask.title}</h2>
-                  <div className="flex items-center gap-3 text-slate-600">
-                    <span className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {selectedTask.duration || '45分钟'}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                      </svg>
-                      128人已学习
-                    </span>
-                  </div>
-                </div>
-                
-                {/* 学习工具 */}
-                <div className="flex items-center gap-2">
-                  {/* 缩放控制 */}
-                  <div className="flex items-center gap-1 border border-slate-200 rounded-lg p-1">
-                    <button
-                      onClick={handleZoomOut}
-                      className="px-2 py-1 text-xs hover:bg-slate-100 rounded transition"
-                      title="缩小"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </button>
-                    <span className="px-2 text-xs text-slate-600">{zoomLevel}%</span>
-                    <button
-                      onClick={handleZoomIn}
-                      className="px-2 py-1 text-xs hover:bg-slate-100 rounded transition"
-                      title="放大"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                    </button>
-                  </div>
-                  {/* 全屏按钮 */}
-                  <button
-                    onClick={handleFullscreen}
-                    className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 bg-white text-slate-600 rounded-lg text-xs hover:bg-slate-50 transition"
-                    title={isFullscreen ? '退出全屏' : '全屏'}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* 内容切换标签 */}
-            <div className="px-6 border-b border-slate-200">
-              <div className="flex gap-6">
-                <button
-                  onClick={() => setActiveTab('content')}
-                  className={`py-3 text-sm font-medium border-b-2 transition ${
-                    activeTab === 'content'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  学习内容
-                </button>
-                <button
-                  onClick={() => setActiveTab('task')}
-                  className={`py-3 text-sm font-medium border-b-2 transition ${
-                    activeTab === 'task'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  任务提交
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* 内容区域 */}
-              <div 
-                className="flex-1 overflow-y-auto px-6 py-6 transition-transform duration-300"
-                style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top left' }}
-              >
-                {activeTab === 'content' ? (
-                  <div className="space-y-6">
-                    {/* 学习进度 */}
-                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium text-blue-800 flex items-center gap-2">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          学习进度
-                        </h3>
-                        <span className="text-xs text-blue-600 font-medium">{Math.round((selectedTask.status === 'completed' ? 100 : selectedTask.status === 'ongoing' ? 50 : 0))}%</span>
-                      </div>
-                      <div className="h-2 bg-blue-100 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                          style={{ width: `${selectedTask.status === 'completed' ? 100 : selectedTask.status === 'ongoing' ? 50 : 0}%` }}
-                        />
-                      </div>
-                    </div>
-                    
-                    {/* 学习任务 */}
-                    <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
-                      <h3 className="text-base font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                        <span className="w-6 h-6 bg-blue-500 text-white rounded-lg flex items-center justify-center text-xs">📋</span>
-                        学习任务
-                      </h3>
-                      <p className="text-sm text-slate-600 leading-relaxed">
-                        {selectedTask.content}
-                      </p>
-                    </div>
-
-                    {/* 任务要求 */}
-                    {selectedTask.requirements && selectedTask.requirements.length > 0 && (
-                      <div className="bg-amber-50 rounded-xl p-5 border border-amber-200">
-                        <h3 className="text-base font-semibold text-amber-800 mb-3 flex items-center gap-2">
-                          <span className="w-6 h-6 bg-amber-500 text-white rounded-lg flex items-center justify-center text-xs">✓</span>
-                          任务要求
-                        </h3>
-                        <ul className="space-y-2">
-                          {selectedTask.requirements.map((req, index) => (
-                            <li key={index} className="flex items-start gap-2 text-sm text-amber-700">
-                              <span className="w-5 h-5 bg-amber-200 text-amber-800 rounded-full flex items-center justify-center text-xs shrink-0 mt-0.5">
-                                {index + 1}
-                              </span>
-                              {req}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* 学习资源 */}
-                    {selectedTask.resources && selectedTask.resources.length > 0 && (
-                      <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
-                        <h3 className="text-base font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                          <span className="w-6 h-6 bg-blue-500 text-white rounded-lg flex items-center justify-center text-xs">📚</span>
-                          学习资源
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {selectedTask.resources.map((resource) => (
-                            <div
-                              key={resource.id}
-                              className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg hover:border-blue-400 hover:bg-slate-100 cursor-pointer transition"
-                            >
-                              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                {resource.type === 'pdf' && <span className="text-red-500 text-xs font-bold">PDF</span>}
-                                {resource.type === 'doc' && <span className="text-blue-500 text-xs font-bold">DOC</span>}
-                                {resource.type === 'video' && <span className="text-purple-500 text-xs font-bold">▶</span>}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-slate-700 truncate">{resource.name}</p>
-                                <p className="text-xs text-slate-400">{resource.size}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 视频讲解 */}
-                    <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
-                      <h3 className="text-base font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                        <span className="w-6 h-6 bg-blue-500 text-white rounded-lg flex items-center justify-center text-xs">▶</span>
-                        视频讲解
-                      </h3>
-                      <div className="bg-slate-800 rounded-xl aspect-video flex items-center justify-center cursor-pointer hover:bg-slate-700 transition">
-                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-                          <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {/* 提交成功提示 */}
-                    {submitSuccess && (
-                      <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
-                        <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="font-medium text-green-800">任务提交成功！</p>
-                          <p className="text-sm text-green-600">老师批改后会通知你</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 任务提交表单 */}
-                    <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
-                      <div className="flex items-center gap-2 mb-4">
-                        <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded">任务</span>
-                        <h4 className="font-semibold text-slate-800">{selectedTask.title}</h4>
-                      </div>
-                      <p className="text-sm text-slate-600 mb-4">
-                        请根据学习内容，完成相应的任务提交。支持文字、图片、文档等多种格式。
-                      </p>
-                      
-                      {/* 文本输入 */}
-                      <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
-                        <textarea
-                          value={taskContent}
-                          onChange={(e) => setTaskContent(e.target.value)}
-                          className="w-full h-40 resize-none border-none outline-none text-sm bg-transparent"
-                          placeholder="请输入你的任务内容..."
-                        />
-                      </div>
-
-                      {/* 附件列表 */}
-                      {attachments.length > 0 && (
-                        <div className="mb-4 space-y-2">
-                          {attachments.map((file, index) => (
-                            <div key={index} className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg p-3">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                                  <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                  </svg>
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-slate-700">{file.name}</p>
-                                  <p className="text-xs text-slate-400">{(file.size / 1024).toFixed(1)} KB</p>
-                                </div>
-                              </div>
-                              <button
-                                onClick={() => removeAttachment(index)}
-                                className="text-slate-400 hover:text-red-500 transition"
-                                title="删除附件"
-                              >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                        <label className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm hover:border-blue-400 transition cursor-pointer">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                          </svg>
-                          添加附件
-                          <input
-                            type="file"
-                            multiple
-                            onChange={handleFileChange}
-                            className="hidden"
-                          />
-                        </label>
-                        <button
-                          onClick={handleSubmitTask}
-                          disabled={submitting}
-                          className="px-6 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                          {submitting ? (
-                            <>
-                              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                              </svg>
-                              提交中...
-                            </>
-                          ) : (
-                            '提交任务'
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* 课时导航 */}
-              <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
-                {/* 左侧：上一课 */}
-                <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:border-blue-400 hover:text-blue-600 transition">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                  上一课
-                </button>
-                
-                {/* 中间：AI助手 */}
-                <button
-                  onClick={() => setAiAssistantOpen(!aiAssistantOpen)}
-                  className="flex items-center gap-2 px-4 py-2 border border-purple-300 bg-purple-50 text-purple-600 rounded-lg text-sm hover:bg-purple-100 transition shadow-sm"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                  {aiAssistantOpen ? '收起助手' : 'AI助手'}
-                </button>
-                
-                {/* 右侧：下一课 */}
-                <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:border-blue-400 hover:text-blue-600 transition">
-                  下一课
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-slate-400">
-            <div className="text-center">
-              <svg className="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-              <p>请从左侧选择一个课时开始学习</p>
+      {/* 课时标题栏 */}
+      <div className="px-6 py-4 border-b border-slate-200">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+          {/* 课程信息 */}
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <h2 className="font-medium text-slate-800">{currentModule?.title} · {selectedTask.title}</h2>
+            <div className="flex items-center gap-3 text-slate-600">
+              <span className="flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {selectedTask.duration || '45分钟'}
+              </span>
+              <span className="flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                128人已学习
+              </span>
             </div>
           </div>
-        )}
+        </div>
+      </div>
+
+      {/* 三栏布局 */}
+      <div className="flex-1 flex flex-col md:flex-row min-h-0">
+        {/* 左侧：PPT展示区域 */}
+        <div className="w-full md:w-1/3 border-r border-slate-200 flex flex-col">
+          <div className="p-4 border-b border-slate-200 flex justify-between items-center">
+            <h3 className="font-medium text-slate-800 flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              PPT展示
+            </h3>
+            <div className="flex items-center gap-2">
+              {/* PPT缩放控制 */}
+              <div className="flex items-center gap-1 border border-slate-200 rounded-lg p-1">
+                <button
+                  onClick={handlePptZoomOut}
+                  className="px-2 py-1 text-xs hover:bg-slate-100 rounded transition"
+                  title="缩小"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+                <span className="px-2 text-xs text-slate-600">{pptZoom}%</span>
+                <button
+                  onClick={handlePptZoomIn}
+                  className="px-2 py-1 text-xs hover:bg-slate-100 rounded transition"
+                  title="放大"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </button>
+              </div>
+              {/* 全屏按钮 */}
+              <button
+                onClick={handlePptFullscreen}
+                className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 bg-white text-slate-600 rounded-lg text-xs hover:bg-slate-50 transition"
+                title="全屏"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          {/* PPT内容 */}
+          <div className="flex-1 overflow-hidden relative" id="ppt-container">
+            <div 
+              className="h-full w-full flex items-center justify-center p-4 transition-transform duration-300"
+              style={{ transform: `scale(${pptZoom / 100})` }}
+            >
+              <div className="bg-white border border-slate-200 rounded-lg shadow-md w-full max-w-md aspect-video flex flex-col">
+                <div className="bg-slate-100 border-b border-slate-200 p-3 flex justify-between items-center">
+                  <h4 className="text-sm font-medium text-slate-800">{pptData.title}</h4>
+                  <span className="text-xs text-slate-500">第 {currentPptPage} 页，共 {pptData.pages.length} 页</span>
+                </div>
+                <div className="flex-1 flex items-center justify-center p-6">
+                  <div className="text-center">
+                    <h5 className="text-lg font-medium text-slate-800 mb-2">{pptData.pages[currentPptPage - 1].title}</h5>
+                    <p className="text-slate-600">{pptData.pages[currentPptPage - 1].content}</p>
+                    <div className="mt-4 w-32 h-16 bg-slate-200 rounded mx-auto flex items-center justify-center">
+                      <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* PPT导航 */}
+          <div className="p-4 border-t border-slate-200 flex justify-between items-center">
+            <button
+              onClick={handlePptPrev}
+              disabled={currentPptPage === 1}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:border-blue-400 hover:text-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              上一页
+            </button>
+            <div className="flex-1 mx-4">
+              <input
+                type="range"
+                min="1"
+                max={pptData.pages.length}
+                value={currentPptPage}
+                onChange={(e) => setCurrentPptPage(parseInt(e.target.value))}
+                className="w-full"
+              />
+            </div>
+            <button
+              onClick={handlePptNext}
+              disabled={currentPptPage === pptData.pages.length}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:border-blue-400 hover:text-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              下一页
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* 中间：任务展示区域 */}
+        <div className="w-full md:w-1/3 border-r border-slate-200 flex flex-col">
+          <div className="p-4 border-b border-slate-200">
+            <h3 className="font-medium text-slate-800 flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+              任务中心
+            </h3>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* 学习进度 */}
+            <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-medium text-blue-800">学习进度</h4>
+                <span className="text-xs text-blue-600 font-medium">{Math.round((selectedTask.status === 'completed' ? 100 : selectedTask.status === 'ongoing' ? 50 : 0))}%</span>
+              </div>
+              <div className="h-2 bg-blue-100 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                  style={{ width: `${selectedTask.status === 'completed' ? 100 : selectedTask.status === 'ongoing' ? 50 : 0}%` }}
+                />
+              </div>
+            </div>
+            
+            {/* 当前任务 */}
+            <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-base font-semibold text-slate-800">当前任务</h4>
+                <span className={`px-2 py-1 text-xs rounded-full ${
+                  selectedTask.status === 'completed' ? 'bg-green-100 text-green-800' :
+                  selectedTask.status === 'ongoing' ? 'bg-blue-100 text-blue-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {selectedTask.status === 'completed' ? '已完成' :
+                   selectedTask.status === 'ongoing' ? '进行中' :
+                   '待开始'}
+                </span>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                {selectedTask.content}
+              </p>
+              
+              {/* 任务详情 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-slate-500">预计耗时：</span>
+                  <span className="text-slate-700 font-medium">{selectedTask.duration || '45分钟'}</span>
+                </div>
+                <div className="flex items-start gap-2 text-sm">
+                  <svg className="w-4 h-4 text-slate-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <span className="text-slate-500">完成标准：</span>
+                    <ul className="mt-1 space-y-1">
+                      {selectedTask.requirements && selectedTask.requirements.map((req, index) => (
+                        <li key={index} className="text-slate-700">• {req}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              
+              {/* 任务操作 */}
+              <div className="mt-4 flex gap-2">
+                <button className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition">
+                  开始学习
+                </button>
+                <button className="px-4 py-2 border border-slate-200 rounded-lg text-sm hover:border-blue-400 hover:text-blue-600 transition">
+                  标记完成
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 右侧：任务看板和资源模板 */}
+        <div className="w-full md:w-1/3 flex flex-col">
+          {/* 任务看板 */}
+          <div className="flex-1 border-b border-slate-200 flex flex-col">
+            <div className="p-4 border-b border-slate-200">
+              <h3 className="font-medium text-slate-800 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                任务看板
+              </h3>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4">
+              {/* 待完成任务 */}
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-3 h-3 bg-gray-400 rounded-full"></span>
+                  <h4 className="text-sm font-medium text-slate-700">待完成 ({taskBoard.todo.length})</h4>
+                </div>
+                <div className="space-y-2 pl-5">
+                  {taskBoard.todo.map((task) => (
+                    <div key={task.id} className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
+                      <div className="flex justify-between items-start mb-2">
+                        <h5 className="text-sm font-medium text-slate-800">{task.title}</h5>
+                        <span className={`px-2 py-0.5 text-xs rounded ${
+                          task.priority === 'high' ? 'bg-red-100 text-red-800' :
+                          task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {task.priority === 'high' ? '高' :
+                           task.priority === 'medium' ? '中' :
+                           '低'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500">截止日期：{task.dueDate}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* 进行中任务 */}
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+                  <h4 className="text-sm font-medium text-slate-700">进行中 ({taskBoard.inProgress.length})</h4>
+                </div>
+                <div className="space-y-2 pl-5">
+                  {taskBoard.inProgress.map((task) => (
+                    <div key={task.id} className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
+                      <div className="flex justify-between items-start mb-2">
+                        <h5 className="text-sm font-medium text-slate-800">{task.title}</h5>
+                        <span className={`px-2 py-0.5 text-xs rounded ${
+                          task.priority === 'high' ? 'bg-red-100 text-red-800' :
+                          task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {task.priority === 'high' ? '高' :
+                           task.priority === 'medium' ? '中' :
+                           '低'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500">截止日期：{task.dueDate}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* 已完成任务 */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                  <h4 className="text-sm font-medium text-slate-700">已完成 ({taskBoard.completed.length})</h4>
+                </div>
+                <div className="space-y-2 pl-5">
+                  {taskBoard.completed.map((task) => (
+                    <div key={task.id} className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm opacity-70">
+                      <div className="flex justify-between items-start mb-2">
+                        <h5 className="text-sm font-medium text-slate-800 line-through">{task.title}</h5>
+                        <span className={`px-2 py-0.5 text-xs rounded ${
+                          task.priority === 'high' ? 'bg-red-100 text-red-800' :
+                          task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {task.priority === 'high' ? '高' :
+                           task.priority === 'medium' ? '中' :
+                           '低'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500">截止日期：{task.dueDate}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* 资源模板 */}
+          <div className="h-64 flex flex-col">
+            <div className="p-4 border-b border-slate-200">
+              <h3 className="font-medium text-slate-800 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                资源模板
+              </h3>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="space-y-2">
+                {resourceTemplates.map((template) => (
+                  <div key={template.id} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg hover:border-blue-400 transition">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        {template.type === 'doc' && <span className="text-blue-500 text-xs font-bold">DOC</span>}
+                        {template.type === 'pdf' && <span className="text-red-500 text-xs font-bold">PDF</span>}
+                        {template.type === 'ppt' && <span className="text-orange-500 text-xs font-bold">PPT</span>}
+                        {template.type === 'excel' && <span className="text-green-500 text-xs font-bold">XLS</span>}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-700">{template.name}</p>
+                        <p className="text-xs text-slate-400">{template.size}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button className="p-1.5 text-slate-500 hover:text-blue-500 transition" title="预览">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                      <button className="p-1.5 text-slate-500 hover:text-blue-500 transition" title="下载">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 课时导航 */}
+      <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
+        {/* 左侧：上一课 */}
+        <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:border-blue-400 hover:text-blue-600 transition">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          上一课
+        </button>
+        
+        {/* 中间：AI助手 */}
+        <button
+          onClick={() => setAiAssistantOpen(!aiAssistantOpen)}
+          className="flex items-center gap-2 px-4 py-2 border border-purple-300 bg-purple-50 text-purple-600 rounded-lg text-sm hover:bg-purple-100 transition shadow-sm"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+          {aiAssistantOpen ? '收起助手' : 'AI助手'}
+        </button>
+        
+        {/* 右侧：下一课 */}
+        <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:border-blue-400 hover:text-blue-600 transition">
+          下一课
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
 
       {/* AI助手 - 可折叠 */}

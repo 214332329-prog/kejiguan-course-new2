@@ -235,41 +235,14 @@ export default function WorkspacePage() {
 
       {/* 三栏布局 */}
       <div className="flex h-[calc(100vh-64px)]">
-        {/* 左侧边栏 */}
-        {showLeftSidebar && (
-          <LeftSidebar
-            modules={courseData.modules}
-            activeModule={activeModuleId}
-            selectedTask={selectedTask}
-            onSelectModule={handleSelectModule}
-            onSelectTask={handleSelectTask}
-            completedTasks={completedTasks}
-            totalTasks={totalTasks}
-            onHideSidebar={() => setShowLeftSidebar(false)}
-          />
-        )}
-        
-        {/* 中间内容 */}
+        {/* 主内容区域 - 三栏布局 */}
         <main className="flex-1 overflow-hidden relative">
-
-          
           <CenterPanel
             selectedTask={selectedTask}
             currentModule={selectedModule}
             user={user}
           />
         </main>
-        
-        {/* 右侧边栏 */}
-        {showRightSidebar && (
-          <RightSidebar
-            selectedTask={selectedTask}
-            completedTasks={completedTasks}
-            totalTasks={totalTasks}
-            user={user}
-            onHideSidebar={() => setShowRightSidebar(false)}
-          />
-        )}
       </div>
 
       {/* 移动端导航 */}
