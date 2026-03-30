@@ -330,13 +330,13 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
           {/* 课程信息 */}
           <div className="flex flex-wrap items-center gap-3 text-sm">
-            <h2 className="font-medium text-slate-800">{currentModule?.title} · {selectedTask.title}</h2>
+            <h2 className="font-medium text-slate-800">{currentModule?.title} · {selectedTask?.title || '未选择任务'}</h2>
             <div className="flex items-center gap-3 text-slate-600">
               <span className="flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                {selectedTask.duration || '45分钟'}
+                {selectedTask?.duration || '45分钟'}
               </span>
               <span className="flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -473,12 +473,12 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
             <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-sm font-medium text-blue-800">学习进度</h4>
-                <span className="text-xs text-blue-600 font-medium">{Math.round((selectedTask.status === 'completed' ? 100 : selectedTask.status === 'ongoing' ? 50 : 0))}%</span>
+                <span className="text-xs text-blue-600 font-medium">{Math.round((selectedTask?.status === 'completed' ? 100 : selectedTask?.status === 'ongoing' ? 50 : 0))}%</span>
               </div>
               <div className="h-2 bg-blue-100 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                  style={{ width: `${selectedTask.status === 'completed' ? 100 : selectedTask.status === 'ongoing' ? 50 : 0}%` }}
+                  style={{ width: `${selectedTask?.status === 'completed' ? 100 : selectedTask?.status === 'ongoing' ? 50 : 0}%` }}
                 />
               </div>
             </div>
@@ -488,17 +488,17 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-base font-semibold text-slate-800">当前任务</h4>
                 <span className={`px-2 py-1 text-xs rounded-full ${
-                  selectedTask.status === 'completed' ? 'bg-green-100 text-green-800' :
-                  selectedTask.status === 'ongoing' ? 'bg-blue-100 text-blue-800' :
+                  selectedTask?.status === 'completed' ? 'bg-green-100 text-green-800' :
+                  selectedTask?.status === 'ongoing' ? 'bg-blue-100 text-blue-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
-                  {selectedTask.status === 'completed' ? '已完成' :
-                   selectedTask.status === 'ongoing' ? '进行中' :
+                  {selectedTask?.status === 'completed' ? '已完成' :
+                   selectedTask?.status === 'ongoing' ? '进行中' :
                    '待开始'}
                 </span>
               </div>
               <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                {selectedTask.content}
+                {selectedTask?.content || '请选择一个任务'}
               </p>
               
               {/* 任务详情 */}
@@ -508,7 +508,7 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span className="text-slate-500">预计耗时：</span>
-                  <span className="text-slate-700 font-medium">{selectedTask.duration || '45分钟'}</span>
+                  <span className="text-slate-700 font-medium">{selectedTask?.duration || '45分钟'}</span>
                 </div>
                 <div className="flex items-start gap-2 text-sm">
                   <svg className="w-4 h-4 text-slate-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -517,7 +517,7 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
                   <div>
                     <span className="text-slate-500">完成标准：</span>
                     <ul className="mt-1 space-y-1">
-                      {selectedTask.requirements && selectedTask.requirements.map((req, index) => (
+                      {selectedTask?.requirements && selectedTask?.requirements.map((req, index) => (
                         <li key={index} className="text-slate-700">• {req}</li>
                       ))}
                     </ul>
