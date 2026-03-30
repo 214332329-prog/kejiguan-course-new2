@@ -249,73 +249,62 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
         {selectedTask ? (
           <>
             {/* 课时标题栏 */}
-            <div className="px-6 py-5 border-b border-slate-200 flex justify-between items-start">
-              <div>
-                <div className="flex items-center gap-4 text-sm text-slate-600">
-                  <span className="font-medium text-slate-800">{currentModule?.title} · {selectedTask.title}</span>
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {selectedTask.duration || '45分钟'}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    包含1个任务
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    128人已学习
-                  </span>
+            <div className="px-6 py-4 border-b border-slate-200">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+                {/* 课程信息 */}
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                  <h2 className="font-medium text-slate-800">{currentModule?.title} · {selectedTask.title}</h2>
+                  <div className="flex items-center gap-3 text-slate-600">
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {selectedTask.duration || '45分钟'}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                      </svg>
+                      128人已学习
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* 缩放控制 */}
-                <div className="flex items-center gap-1 border border-slate-200 rounded-lg p-1">
+                
+                {/* 学习工具 */}
+                <div className="flex items-center gap-2">
+                  {/* 缩放控制 */}
+                  <div className="flex items-center gap-1 border border-slate-200 rounded-lg p-1">
+                    <button
+                      onClick={handleZoomOut}
+                      className="px-2 py-1 text-xs hover:bg-slate-100 rounded transition"
+                      title="缩小"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
+                    <span className="px-2 text-xs text-slate-600">{zoomLevel}%</span>
+                    <button
+                      onClick={handleZoomIn}
+                      className="px-2 py-1 text-xs hover:bg-slate-100 rounded transition"
+                      title="放大"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                    </button>
+                  </div>
+                  {/* 全屏按钮 */}
                   <button
-                    onClick={handleZoomOut}
-                    className="px-2 py-1 text-xs hover:bg-slate-100 rounded transition"
+                    onClick={handleFullscreen}
+                    className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 bg-white text-slate-600 rounded-lg text-xs hover:bg-slate-50 transition"
+                    title={isFullscreen ? '退出全屏' : '全屏'}
                   >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
                     </svg>
                   </button>
-                  <span className="px-2 text-xs text-slate-600">{zoomLevel}%</span>
-                  <button
-                    onClick={handleZoomIn}
-                    className="px-2 py-1 text-xs hover:bg-slate-100 rounded transition"
-                  >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  </button>
                 </div>
-                {/* 全屏按钮 */}
-                <button
-                  onClick={handleFullscreen}
-                  className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 bg-white text-slate-600 rounded-lg text-xs hover:bg-slate-50 transition"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
-                  </svg>
-                  {isFullscreen ? '退出全屏' : '全屏'}
-                </button>
-                {/* AI助手切换按钮 */}
-                <button
-                  onClick={() => setAiAssistantOpen(!aiAssistantOpen)}
-                  className="flex items-center gap-2 px-3 py-1.5 border border-purple-300 bg-purple-50 text-purple-600 rounded-lg text-xs hover:bg-purple-100 transition shadow-sm"
-                >
-                  <svg className={`w-4 h-4 transition-transform duration-300 ${
-                    aiAssistantOpen ? 'rotate-180' : ''
-                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                  {aiAssistantOpen ? '收起助手' : 'AI助手'}
-                </button>
               </div>
             </div>
 
@@ -353,8 +342,27 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
               >
                 {activeTab === 'content' ? (
                   <div className="space-y-6">
+                    {/* 学习进度 */}
+                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-medium text-blue-800 flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          学习进度
+                        </h3>
+                        <span className="text-xs text-blue-600 font-medium">{Math.round((selectedTask.status === 'completed' ? 100 : selectedTask.status === 'ongoing' ? 50 : 0))}%</span>
+                      </div>
+                      <div className="h-2 bg-blue-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                          style={{ width: `${selectedTask.status === 'completed' ? 100 : selectedTask.status === 'ongoing' ? 50 : 0}%` }}
+                        />
+                      </div>
+                    </div>
+                    
                     {/* 学习任务 */}
-                    <div className="bg-slate-50 rounded-xl p-5">
+                    <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
                       <h3 className="text-base font-semibold text-slate-800 mb-3 flex items-center gap-2">
                         <span className="w-6 h-6 bg-blue-500 text-white rounded-lg flex items-center justify-center text-xs">📋</span>
                         学习任务
@@ -386,16 +394,16 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
 
                     {/* 学习资源 */}
                     {selectedTask.resources && selectedTask.resources.length > 0 && (
-                      <div>
+                      <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
                         <h3 className="text-base font-semibold text-slate-800 mb-3 flex items-center gap-2">
                           <span className="w-6 h-6 bg-blue-500 text-white rounded-lg flex items-center justify-center text-xs">📚</span>
                           学习资源
                         </h3>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {selectedTask.resources.map((resource) => (
                             <div
                               key={resource.id}
-                              className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg hover:border-blue-400 cursor-pointer transition"
+                              className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg hover:border-blue-400 hover:bg-slate-100 cursor-pointer transition"
                             >
                               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                                 {resource.type === 'pdf' && <span className="text-red-500 text-xs font-bold">PDF</span>}
@@ -413,7 +421,7 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
                     )}
 
                     {/* 视频讲解 */}
-                    <div>
+                    <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
                       <h3 className="text-base font-semibold text-slate-800 mb-3 flex items-center gap-2">
                         <span className="w-6 h-6 bg-blue-500 text-white rounded-lg flex items-center justify-center text-xs">▶</span>
                         视频讲解
@@ -445,8 +453,8 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
                     )}
 
                     {/* 任务提交表单 */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
-                      <div className="flex items-center gap-2 mb-3">
+                    <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                      <div className="flex items-center gap-2 mb-4">
                         <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded">任务</span>
                         <h4 className="font-semibold text-slate-800">{selectedTask.title}</h4>
                       </div>
@@ -455,11 +463,11 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
                       </p>
                       
                       {/* 文本输入 */}
-                      <div className="bg-white border border-slate-200 rounded-lg p-4 mb-4">
+                      <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
                         <textarea
                           value={taskContent}
                           onChange={(e) => setTaskContent(e.target.value)}
-                          className="w-full h-40 resize-none border-none outline-none text-sm"
+                          className="w-full h-40 resize-none border-none outline-none text-sm bg-transparent"
                           placeholder="请输入你的任务内容..."
                         />
                       </div>
@@ -468,7 +476,7 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
                       {attachments.length > 0 && (
                         <div className="mb-4 space-y-2">
                           {attachments.map((file, index) => (
-                            <div key={index} className="flex items-center justify-between bg-white border border-slate-200 rounded-lg p-3">
+                            <div key={index} className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg p-3">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
                                   <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -483,6 +491,7 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
                               <button
                                 onClick={() => removeAttachment(index)}
                                 className="text-slate-400 hover:text-red-500 transition"
+                                title="删除附件"
                               >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -493,8 +502,8 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
                         </div>
                       )}
                       
-                      <div className="flex items-center justify-between">
-                        <label className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm hover:border-blue-400 transition cursor-pointer">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                        <label className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm hover:border-blue-400 transition cursor-pointer">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                           </svg>
@@ -509,7 +518,7 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
                         <button
                           onClick={handleSubmitTask}
                           disabled={submitting}
-                          className="px-6 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="px-6 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                           {submitting ? (
                             <>
