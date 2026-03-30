@@ -14,6 +14,7 @@ interface RightSidebarProps {
 
 export default function RightSidebar({ selectedTask = null, completedTasks = 0, totalTasks = 0, role = 'student', user, onHideSidebar }: RightSidebarProps) {
   const [activeTab, setActiveTab] = useState<'current' | 'history'>('current')
+  const [showHideHint, setShowHideHint] = useState(false)
 
   // 计算剩余时间
   const getRemainingTime = () => {
@@ -41,8 +42,24 @@ export default function RightSidebar({ selectedTask = null, completedTasks = 0, 
 
   return (
     <aside 
-      className="w-80 lg:w-72 bg-slate-50 border-l border-slate-200 flex flex-col h-full shrink-0 overflow-y-auto hidden lg:flex"
+      className="w-80 lg:w-72 bg-slate-50 border-l border-slate-200 flex flex-col h-full shrink-0 overflow-y-auto hidden lg:flex relative"
+      onMouseEnter={() => setShowHideHint(true)}
+      onMouseLeave={() => setShowHideHint(false)}
     >
+      {/* 隐藏提示 */}
+      {showHideHint && onHideSidebar && (
+        <div className="absolute left-0 top-1/2 transform -translate-y-1/2 translate-x-1/2 z-10">
+          <button
+            onClick={onHideSidebar}
+            className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg shadow-md hover:bg-slate-50 transition-all duration-300 transform hover:-translate-x-1"
+          >
+            <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+            </svg>
+            <span className="text-sm text-slate-700">隐藏右侧</span>
+          </button>
+        </div>
+      )}
       <div className="p-4 space-y-4">
         {/* 倒计时卡片 */}
         <div className="bg-white rounded-xl p-5 border border-slate-200 text-center">
