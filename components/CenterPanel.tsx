@@ -530,13 +530,24 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
               </div>
 
               {/* 课时导航 */}
-              <div className="px-6 py-4 border-t border-slate-200 flex justify-between items-center">
+              <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
                 {/* 左侧：上一课 */}
                 <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:border-blue-400 hover:text-blue-600 transition">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                   上一课
+                </button>
+                
+                {/* 中间：AI助手 */}
+                <button
+                  onClick={() => setAiAssistantOpen(!aiAssistantOpen)}
+                  className="flex items-center gap-2 px-4 py-2 border border-purple-300 bg-purple-50 text-purple-600 rounded-lg text-sm hover:bg-purple-100 transition shadow-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  {aiAssistantOpen ? '收起助手' : 'AI助手'}
                 </button>
                 
                 {/* 右侧：下一课 */}
