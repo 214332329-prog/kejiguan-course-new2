@@ -93,5 +93,17 @@ export const cache = new Cache();
  * @returns 生成的缓存键
  */
 export const generateCacheKey = (prefix: string, ...args: any[]): string => {
-  return `${prefix}:${args.map(arg => JSON.stringify(arg)).join(':')}`;
+  try {
+    return `${prefix}:${args.map(arg => {
+      try {
+        return JSON.stringify(arg);
+      } catch (error) {
+        console.warn('Error stringifying cache key argument:', error);
+        return String(arg);
+      }
+    }).join(':')}`;
+  } catch (error) {
+    console.warn('Error generating cache key:', error);
+    return `${prefix}:${Date.now()}`;
+  }
 };

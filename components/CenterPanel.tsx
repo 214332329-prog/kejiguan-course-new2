@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Task, Module, Message } from '@/types'
+import ConfirmDialog from './ConfirmDialog'
 
 // 模拟OpenAI API调用
 const mockOpenAICall = async (prompt: string, taskContext: string): Promise<string> => {
@@ -72,6 +73,11 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
   const [attachments, setAttachments] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [submissionHistory, setSubmissionHistory] = useState<any[]>([])
+  const [submissionStatus, setSubmissionStatus] = useState<string>('')
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [confirmDialogMessage, setConfirmDialogMessage] = useState('')
+  const [confirmDialogCallback, setConfirmDialogCallback] = useState<() => void>(() => {})
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const quickQuestions = [
@@ -89,13 +95,42 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
     scrollToBottom()
   }, [messages])
 
-  // 当选择新任务时，重置提交状态
+  // 当选择新任务时，重置提交状态并获取提交历史
   useEffect(() => {
     setTaskContent('')
     setAttachments([])
     setSubmitSuccess(false)
     setActiveTab('content')
+    fetchSubmissionHistory()
   }, [selectedTask?.id])
+
+  // 获取提交历史
+  const fetchSubmissionHistory = async () => {
+    if (!selectedTask?.id) return
+    
+    try {
+      // 这里应该从后端API获取提交历史
+      // 暂时使用模拟数据
+      setSubmissionHistory([
+        {
+          id: '1',
+          content: '第一次提交的任务内容',
+          attachments: [{ name: 'report.pdf', size: '1.2MB' }],
+          submittedAt: '2026-03-30 14:30:00',
+          status: 'pending'
+        },
+        {
+          id: '2',
+          content: '修改后的任务内容',
+          attachments: [{ name: 'report_v2.pdf', size: '1.5MB' }],
+          submittedAt: '2026-03-31 09:15:00',
+          status: 'reviewing'
+        }
+      ])
+    } catch (error) {
+      console.error('获取提交历史失败:', error)
+    }
+  }
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return
@@ -151,23 +186,60 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
 
   const handleSubmitTask = async () => {
     if (!taskContent.trim() && attachments.length === 0) {
-      alert('请输入任务内容或上传附件')
+      setConfirmDialogMessage('请输入任务内容或上传附件')
+      setConfirmDialogCallback(() => {})
+      setShowConfirmDialog(true)
       return
     }
 
     setSubmitting(true)
+    setSubmissionStatus('submitting')
 
     try {
-      // 模拟提交过程
+      // 模拟文件上传
+      const uploadedFiles = await Promise.all(attachments.map(async (file) => {
+        // 这里应该调用真实的文件上传API
+        // 暂时模拟上传过程
+        await new Promise(resolve => setTimeout(resolve, 500))
+        return {
+          name: file.name,
+          size: `${(file.size / 1024 / 1024).toFixed(2)}MB`
+        }
+      }))
+
+      // 模拟任务提交API调用
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      // 模拟成功响应
+      const newSubmission = {
+        id: Date.now().toString(),
+        content: taskContent,
+        attachments: uploadedFiles,
+        submittedAt: new Date().toLocaleString(),
+        status: 'pending'
+      }
+
+      // 更新提交历史
+      setSubmissionHistory(prev => [newSubmission, ...prev])
+
+      // 重置表单
+      setTaskContent('')
+      setAttachments([])
+      setSubmitting(false)
+      setSubmitSuccess(true)
+      setSubmissionStatus('success')
+      
+      // 3秒后重置成功状态
       setTimeout(() => {
-        setSubmitting(false)
-        setSubmitSuccess(true)
-        // 3秒后重置成功状态
-        setTimeout(() => setSubmitSuccess(false), 3000)
-      }, 1500)
+        setSubmitSuccess(false)
+        setSubmissionStatus('')
+      }, 3000)
     } catch (error) {
       setSubmitting(false)
-      alert('提交失败，请重试')
+      setSubmissionStatus('error')
+      setConfirmDialogMessage('提交失败，请重试')
+      setConfirmDialogCallback(() => {})
+      setShowConfirmDialog(true)
       console.error('Task submission error:', error)
     }
   }
@@ -525,15 +597,99 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
                 </div>
               </div>
               
-              {/* 任务操作 */}
-              <div className="mt-4 flex gap-2">
-                <button className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition">
-                  开始学习
-                </button>
-                <button className="px-4 py-2 border border-slate-200 rounded-lg text-sm hover:border-blue-400 hover:text-blue-600 transition">
-                  标记完成
-                </button>
+              {/* 任务提交 */}
+              <div className="mt-6">
+                <h4 className="text-sm font-medium text-slate-800 mb-3">任务提交</h4>
+                <div className="space-y-3">
+                  <textarea
+                    value={taskContent}
+                    onChange={(e) => setTaskContent(e.target.value)}
+                    placeholder="请输入任务完成情况..."
+                    className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={3}
+                  />
+                  <div>
+                    <label className="block text-xs text-slate-600 mb-1">上传附件</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleFileChange}
+                        className="text-xs border border-slate-200 rounded-lg px-3 py-2"
+                      />
+                    </div>
+                    {attachments.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {attachments.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between text-xs p-2 bg-slate-50 rounded">
+                            <span>{file.name}</span>
+                            <button
+                              onClick={() => removeAttachment(index)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleSubmitTask}
+                    disabled={submitting || (!taskContent.trim() && attachments.length === 0)}
+                    className="w-full px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {submitting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        提交中...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        提交任务
+                      </>
+                    )}
+                  </button>
+                  {submitSuccess && (
+                    <div className="p-3 bg-green-50 text-green-600 rounded-lg text-sm flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      提交成功！
+                    </div>
+                  )}
+                </div>
               </div>
+              
+              {/* 提交历史 */}
+              {submissionHistory.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="text-sm font-medium text-slate-800 mb-3">提交历史</h4>
+                  <div className="space-y-3">
+                    {submissionHistory.map((submission) => (
+                      <div key={submission.id} className="border border-slate-200 rounded-lg p-3">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-xs text-slate-500">提交时间：{submission.submittedAt}</span>
+                          <span className={`px-2 py-0.5 text-xs rounded-full ${submission.status === 'pending' ? 'bg-gray-100 text-gray-800' : submission.status === 'reviewing' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                            {submission.status === 'pending' ? '待审核' : submission.status === 'reviewing' ? '审核中' : '已通过'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 mb-2 line-clamp-2">{submission.content}</p>
+                        {submission.attachments.length > 0 && (
+                          <div className="text-xs text-slate-500">
+                            附件：{submission.attachments.map((attach: any) => attach.name).join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -758,6 +914,18 @@ export default function CenterPanel({ selectedTask = null, currentModule, user }
           </div>
         </div>
       )}
+      
+      {/* 确认对话框 */}
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        title="提示"
+        message={confirmDialogMessage}
+        onConfirm={() => {
+          confirmDialogCallback()
+          setShowConfirmDialog(false)
+        }}
+        onCancel={() => setShowConfirmDialog(false)}
+      />
     </div>
   )
 }

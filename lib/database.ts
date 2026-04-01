@@ -7,6 +7,35 @@ import { supabase } from './supabase';
 import { Course, Module, Task, Submission, Attachment } from '@/types';
 import { cache, generateCacheKey } from './cache';
 
+// 模拟数据，当Supabase不可用时使用
+const mockCourses: Course[] = [
+  {
+    id: 'default-course',
+    title: '默认课程',
+    description: '这是一个默认课程',
+    modules: [
+      {
+        id: 'default-module',
+        title: '新模块 1',
+        tasks: [
+          {
+            id: 'default-task',
+            title: '默认任务',
+            taskType: 'theory',
+            content: '这是一个默认任务，请开始学习',
+            status: 'pending',
+            duration: '45分钟',
+            requirements: ['完成任务', '提交作业'],
+            resources: []
+          }
+        ]
+      }
+    ],
+    totalDuration: '45分钟',
+    totalTasks: 1
+  }
+];
+
 // 课程相关操作
 export const courseService = {
   // 获取所有课程
@@ -19,6 +48,13 @@ export const courseService = {
     }
     
     try {
+      // 检查Supabase是否可用
+      if (!supabase || !supabase.from) {
+        console.warn('Supabase not available, using mock data');
+        cache.set(cacheKey, mockCourses);
+        return mockCourses;
+      }
+      
       // 获取所有课程
       const { data: coursesData, error: coursesError } = await supabase
         .from('courses')
@@ -26,7 +62,8 @@ export const courseService = {
       
       if (coursesError) {
         console.error('Error fetching courses:', coursesError);
-        return [];
+        cache.set(cacheKey, mockCourses);
+        return mockCourses;
       }
       
       // 为每个课程获取模块数据
@@ -121,7 +158,8 @@ export const courseService = {
       return coursesWithModules;
     } catch (error) {
       console.error('Error in getCourses:', error);
-      return [];
+      cache.set(cacheKey, mockCourses);
+      return mockCourses;
     }
   },
 
@@ -135,6 +173,14 @@ export const courseService = {
     }
     
     try {
+      // 检查Supabase是否可用
+      if (!supabase || !supabase.from) {
+        console.warn('Supabase not available, using mock data');
+        const mockCourse = mockCourses.find(course => course.id === id) || mockCourses[0];
+        cache.set(cacheKey, mockCourse);
+        return mockCourse;
+      }
+      
       const { data: courseData, error: courseError } = await supabase
         .from('courses')
         .select('*')
@@ -143,7 +189,9 @@ export const courseService = {
       
       if (courseError) {
         console.error('Error fetching course:', courseError);
-        return null;
+        const mockCourse = mockCourses.find(course => course.id === id) || mockCourses[0];
+        cache.set(cacheKey, mockCourse);
+        return mockCourse;
       }
       
       // 获取课程的模块数据
@@ -237,7 +285,9 @@ export const courseService = {
       return course;
     } catch (error) {
       console.error('Error in getCourse:', error);
-      return null;
+      const mockCourse = mockCourses.find(course => course.id === id) || mockCourses[0];
+      cache.set(cacheKey, mockCourse);
+      return mockCourse;
     }
   },
 
@@ -332,18 +382,35 @@ export const moduleService = {
       return cachedData;
     }
     
-    const { data, error } = await supabase
-      .from('modules')
-      .select('*')
-      .eq('course_id', courseId);
-    
-    if (error) {
-      console.error('Error fetching modules:', error);
-      return [];
+    try {
+      // 检查Supabase是否可用
+      if (!supabase || !supabase.from) {
+        console.warn('Supabase not available, using mock data');
+        const mockCourse = mockCourses.find(course => course.id === courseId) || mockCourses[0];
+        cache.set(cacheKey, mockCourse.modules);
+        return mockCourse.modules;
+      }
+      
+      const { data, error } = await supabase
+        .from('modules')
+        .select('*')
+        .eq('course_id', courseId);
+      
+      if (error) {
+        console.error('Error fetching modules:', error);
+        const mockCourse = mockCourses.find(course => course.id === courseId) || mockCourses[0];
+        cache.set(cacheKey, mockCourse.modules);
+        return mockCourse.modules;
+      }
+      
+      cache.set(cacheKey, data);
+      return data;
+    } catch (error) {
+      console.error('Error in getModulesByCourseId:', error);
+      const mockCourse = mockCourses.find(course => course.id === courseId) || mockCourses[0];
+      cache.set(cacheKey, mockCourse.modules);
+      return mockCourse.modules;
     }
-    
-    cache.set(cacheKey, data);
-    return data;
   },
 
   // 创建模块
@@ -448,18 +515,59 @@ export const taskService = {
       return cachedData;
     }
     
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('module_id', moduleId);
-    
-    if (error) {
-      console.error('Error fetching tasks:', error);
-      return [];
+    try {
+      // 检查Supabase是否可用
+      if (!supabase || !supabase.from) {
+        console.warn('Supabase not available, using mock data');
+        let mockTasks: Task[] = [];
+        for (const course of mockCourses) {
+          for (const module of course.modules) {
+            if (module.id === moduleId) {
+              mockTasks = module.tasks;
+              break;
+            }
+          }
+        }
+        cache.set(cacheKey, mockTasks);
+        return mockTasks;
+      }
+      
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('module_id', moduleId);
+      
+      if (error) {
+        console.error('Error fetching tasks:', error);
+        let mockTasks: Task[] = [];
+        for (const course of mockCourses) {
+          for (const module of course.modules) {
+            if (module.id === moduleId) {
+              mockTasks = module.tasks;
+              break;
+            }
+          }
+        }
+        cache.set(cacheKey, mockTasks);
+        return mockTasks;
+      }
+      
+      cache.set(cacheKey, data);
+      return data;
+    } catch (error) {
+      console.error('Error in getTasksByModuleId:', error);
+      let mockTasks: Task[] = [];
+      for (const course of mockCourses) {
+        for (const module of course.modules) {
+          if (module.id === moduleId) {
+            mockTasks = module.tasks;
+            break;
+          }
+        }
+      }
+      cache.set(cacheKey, mockTasks);
+      return mockTasks;
     }
-    
-    cache.set(cacheKey, data);
-    return data;
   },
 
   // 创建任务

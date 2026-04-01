@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Course } from '@/types'
 import { courseService } from '@/lib/database'
 import TeacherAIAssistant from '@/components/TeacherAIAssistant'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 export default function TeacherDashboard() {
   const [user, setUser] = useState<any>(null)
@@ -13,6 +14,8 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [courseMenuOpen, setCourseMenuOpen] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [courseToDelete, setCourseToDelete] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -65,24 +68,32 @@ export default function TeacherDashboard() {
     router.push(`/teacher/dashboard/edit-course?id=${courseId}`)
   }
 
-  const handleDeleteCourse = async (courseId: string) => {
-    if (confirm('确定要删除这门课程吗？')) {
-      try {
-        const success = await courseService.deleteCourse(courseId)
-        if (success) {
-          setCourses(prev => prev.filter(course => course.id !== courseId))
-          // 同时从本地存储删除
-          const localCourses = JSON.parse(localStorage.getItem('courses') || '[]')
-          const updatedCourses = localCourses.filter((c: Course) => c.id !== courseId)
-          localStorage.setItem('courses', JSON.stringify(updatedCourses))
-          console.log('删除课程成功:', courseId)
-        } else {
-          alert('删除课程失败，请重试')
-        }
-      } catch (error) {
-        console.error('删除课程错误:', error)
-        alert('删除课程时发生错误')
+  const handleDeleteCourse = (courseId: string) => {
+    setCourseToDelete(courseId)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDeleteCourse = async () => {
+    if (!courseToDelete) return
+    
+    try {
+      const success = await courseService.deleteCourse(courseToDelete)
+      if (success) {
+        setCourses(prev => prev.filter(course => course.id !== courseToDelete))
+        // 同时从本地存储删除
+        const localCourses = JSON.parse(localStorage.getItem('courses') || '[]')
+        const updatedCourses = localCourses.filter((c: Course) => c.id !== courseToDelete)
+        localStorage.setItem('courses', JSON.stringify(updatedCourses))
+        console.log('删除课程成功:', courseToDelete)
+      } else {
+        alert('删除课程失败，请重试')
       }
+    } catch (error) {
+      console.error('删除课程错误:', error)
+      alert('删除课程时发生错误')
+    } finally {
+      setShowDeleteDialog(false)
+      setCourseToDelete(null)
     }
   }
 
@@ -194,6 +205,16 @@ export default function TeacherDashboard() {
                 </svg>
                 资源管理
               </a>
+              <a
+                href="/teacher/role-management"
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                角色管理
+              </a>
             </nav>
           </div>
         </div>
@@ -263,6 +284,15 @@ export default function TeacherDashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
               </svg>
               资源管理
+            </a>
+            <a
+              href="/teacher/role-management"
+              className="flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              角色管理
             </a>
           </nav>
         </aside>
@@ -409,6 +439,20 @@ export default function TeacherDashboard() {
 
       {/* AI助手 */}
       <TeacherAIAssistant currentPage="dashboard" />
+      
+      {/* 删除确认对话框 */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        title="确认删除"
+        message="确定要删除这门课程吗？此操作不可撤销。"
+        confirmText="删除"
+        confirmVariant="danger"
+        onConfirm={confirmDeleteCourse}
+        onCancel={() => {
+          setShowDeleteDialog(false)
+          setCourseToDelete(null)
+        }}
+      />
     </div>
   )
 }

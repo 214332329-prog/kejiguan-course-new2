@@ -99,6 +99,15 @@ export default function LoginPage() {
             {loading ? '登录中...' : '登录'}
           </button>
         </form>
+        
+        <div className="mt-4 space-y-2 text-center text-sm">
+          <a href="/auth/forgot-password" className="text-blue-600 hover:underline block">
+            忘记密码？
+          </a>
+          <a href="/auth/register" className="text-blue-600 hover:underline block">
+            没有账户？立即注册
+          </a>
+        </div>
       </div>
     </div>
   )

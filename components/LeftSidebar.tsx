@@ -11,6 +11,7 @@ interface LeftSidebarProps {
   onSelectTask?: (task: Task) => void
   completedTasks?: number
   totalTasks?: number
+  resources?: { name: string; size: string }[]
   onHideSidebar?: () => void
 }
 
@@ -22,6 +23,12 @@ export default function LeftSidebar({
   onSelectTask = () => {},
   completedTasks = 0,
   totalTasks = 0,
+  resources = [
+    { name: '调研报告模板.docx', size: '156KB' },
+    { name: 'PRD撰写指南.pdf', size: '1.8MB' },
+    { name: '用户研究方法.mp4', size: '45MB' },
+    { name: '优秀案例集.pdf', size: '5.2MB' },
+  ],
   onHideSidebar = () => {},
 }: LeftSidebarProps) {
   const [expandedModules, setExpandedModules] = useState<string[]>([])

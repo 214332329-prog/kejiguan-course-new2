@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Course, Module, Task, Resource } from '@/types'
 import { courseService, moduleService, taskService } from '@/lib/database'
 import TeacherAIAssistant from '@/components/TeacherAIAssistant'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 // 模拟课程数据
 const mockCourse: Course = {
@@ -103,6 +104,9 @@ export default function EditCoursePage() {
   const [activeModuleId, setActiveModuleId] = useState<string>('')
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleteType, setDeleteType] = useState<'module' | 'task'>('module')
+  const [itemToDelete, setItemToDelete] = useState<{ moduleId: string; taskId?: string } | null>(null)
 
   useEffect(() => {
     fetchCourseData()
@@ -211,6 +215,94 @@ export default function EditCoursePage() {
     }))
     setActiveTaskId(newTask.id)
   }
+
+  // 处理删除模块
+  const handleDeleteModule = (moduleId: string) => {
+    setDeleteType('module')
+    setItemToDelete({ moduleId })
+    setShowDeleteDialog(true)
+  }
+
+  // 处理删除任务
+  const handleDeleteTask = (moduleId: string, taskId: string) => {
+    setDeleteType('task')
+    setItemToDelete({ moduleId, taskId })
+    setShowDeleteDialog(true)
+  }
+
+  // 确认删除
+  const confirmDelete = async () => {
+    if (!itemToDelete) return
+
+    try {
+      if (deleteType === 'module') {
+        // 删除模块
+        setCourse(prev => ({
+          ...prev,
+          modules: prev.modules.filter(module => module.id !== itemToDelete.moduleId)
+        }))
+        if (activeModuleId === itemToDelete.moduleId && course.modules.length > 1) {
+          setActiveModuleId(course.modules.find(m => m.id !== itemToDelete.moduleId)?.id || '')
+        }
+      } else if (deleteType === 'task' && itemToDelete.taskId) {
+        // 删除任务
+        setCourse(prev => ({
+          ...prev,
+          modules: prev.modules.map(module =>
+            module.id === itemToDelete.moduleId
+              ? { ...module, tasks: module.tasks.filter(task => task.id !== itemToDelete.taskId) }
+              : module
+          )
+        }))
+      }
+    } catch (error) {
+      console.error('删除失败:', error)
+    } finally {
+      setShowDeleteDialog(false)
+      setItemToDelete(null)
+    }
+  }
+
+  // 防抖函数
+  const debounce = (func: Function, delay: number) => {
+    let timeoutId: NodeJS.Timeout
+    return (...args: any[]) => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => func.apply(null, args), delay)
+    }
+  }
+
+  // 实时保存函数
+  const saveCourseDebounced = useCallback(
+    debounce(async () => {
+      if (!course.title.trim()) return
+
+      try {
+        // 计算总任务数
+        const totalTasks = course.modules.reduce((total, module) => total + module.tasks.length, 0)
+
+        // 更新课程基本信息
+        await courseService.updateCourse(course.id, {
+          title: course.title,
+          description: course.description,
+          totalDuration: course.totalDuration,
+          totalTasks
+        })
+
+        console.log('课程已实时保存')
+      } catch (error) {
+        console.error('实时保存失败:', error)
+      }
+    }, 1000),
+    [course]
+  )
+
+  // 当课程信息变化时实时保存
+  useEffect(() => {
+    if (!loading) {
+      saveCourseDebounced()
+    }
+  }, [course, loading, saveCourseDebounced])
 
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
@@ -437,10 +529,24 @@ export default function EditCoursePage() {
                       <div
                         key={module.id}
                         className={`p-3 rounded-md cursor-pointer transition-colors ${activeModuleId === module.id ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
-                        onClick={() => setActiveModuleId(module.id)}
                       >
-                        <h3 className="font-medium text-gray-900">{module.title}</h3>
-                        <p className="text-sm text-gray-600">{module.tasks.length} 个任务</p>
+                        <div className="flex justify-between items-start">
+                          <div onClick={() => setActiveModuleId(module.id)} className="flex-1">
+                            <h3 className="font-medium text-gray-900">{module.title}</h3>
+                            <p className="text-sm text-gray-600">{module.tasks.length} 个任务</p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteModule(module.id)
+                            }}
+                            className="p-1 text-red-500 hover:text-red-700"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -505,7 +611,10 @@ export default function EditCoursePage() {
                                   <button className="px-2 py-1 bg-yellow-500 text-white rounded-md text-xs hover:bg-yellow-600">
                                     编辑
                                   </button>
-                                  <button className="px-2 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600">
+                                  <button
+                                    onClick={() => handleDeleteTask(module.id, task.id)}
+                                    className="px-2 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600"
+                                  >
                                     删除
                                   </button>
                                 </div>
@@ -604,6 +713,20 @@ export default function EditCoursePage() {
       <div className="max-w-7xl mx-auto">
         <TeacherAIAssistant currentPage="edit-course" />
       </div>
+      
+      {/* 删除确认对话框 */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        title={deleteType === 'module' ? '确认删除模块' : '确认删除任务'}
+        message={deleteType === 'module' ? '确定要删除这个模块吗？此操作不可撤销。' : '确定要删除这个任务吗？此操作不可撤销。'}
+        confirmText="删除"
+        confirmVariant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setShowDeleteDialog(false)
+          setItemToDelete(null)
+        }}
+      />
     </div>
   )
 }
