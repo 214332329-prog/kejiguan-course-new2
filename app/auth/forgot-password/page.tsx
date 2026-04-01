@@ -17,7 +17,7 @@ export default function ForgotPasswordPage() {
       return false
     }
     
-    if (!/+@+\.+/.test(email)) {
+    if (!/^.+@.+\..+$/.test(email)) {
       setError('请输入有效的邮箱地址')
       return false
     }

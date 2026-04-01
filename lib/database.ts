@@ -68,7 +68,7 @@ export const courseService = {
       
       // 为每个课程获取模块数据
       const coursesWithModules = await Promise.all(
-        coursesData.map(async (course) => {
+        coursesData.map(async (course: any) => {
           const { data: modulesData, error: modulesError } = await supabase
             .from('modules')
             .select('*')
@@ -90,7 +90,7 @@ export const courseService = {
           
           // 为每个模块获取任务数据
           const modulesWithTasks = await Promise.all(
-            modulesData.map(async (module) => {
+            modulesData.map(async (module: any) => {
               const { data: tasksData, error: tasksError } = await supabase
                 .from('tasks')
                 .select('*')
@@ -111,7 +111,7 @@ export const courseService = {
               }
               
               // 映射任务字段
-              const mappedTasks = tasksData.map(task => ({
+              const mappedTasks = tasksData.map((task: any) => ({
                 id: task.id,
                 title: task.title,
                 taskType: task.task_type,
@@ -219,7 +219,7 @@ export const courseService = {
       
       // 为每个模块获取任务数据
       const modulesWithTasks = await Promise.all(
-        modulesData.map(async (module) => {
+        modulesData.map(async (module: any) => {
           const { data: tasksData, error: tasksError } = await supabase
             .from('tasks')
             .select('*')
@@ -240,7 +240,7 @@ export const courseService = {
           }
           
           // 映射任务字段
-          const mappedTasks = tasksData.map(task => ({
+          const mappedTasks = tasksData.map((task: any) => ({
             id: task.id,
             title: task.title,
             taskType: task.task_type,

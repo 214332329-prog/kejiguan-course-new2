@@ -31,7 +31,7 @@ export default function RegisterPage() {
       return false
     }
     
-    if (!/+@+\.+/.test(formData.email)) {
+    if (!/^.+@.+\..+$/.test(formData.email)) {
       setError('请输入有效的邮箱地址')
       return false
     }
