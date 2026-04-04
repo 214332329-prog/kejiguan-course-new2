@@ -86,10 +86,29 @@ class ModelManager {
 
     // 启动健康检查
     this.startHealthCheck()
+
+    // 立即执行一次健康检查
+    this.performInitialHealthCheck()
+  }
+
+  /**
+   * 执行初始健康检查
+   */
+  private async performInitialHealthCheck(): Promise<void> {
+    try {
+      const result = await this.healthCheck()
+      this.status.lastCheckTime = Date.now()
+      this.status.isOnline = result.status === 'healthy'
+      this.status.responseTime = result.responseTime
+      console.log(`[ModelManager] Initial health check: ${result.status}, response time: ${result.responseTime}ms`)
+    } catch (error) {
+      console.error('[ModelManager] Initial health check failed:', error)
+    }
   }
 
   /**
    * 健康检查
+   * 使用 Ollama 的 /api/tags 端点检查服务状态
    */
   private async healthCheck(): Promise<HealthCheckResult> {
     const startTime = Date.now()
@@ -97,7 +116,9 @@ class ModelManager {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000)
 
-      const response = await fetch(`${this.config.apiUrl}/health` || this.config.apiUrl, {
+      // 使用 Ollama 的 tags API 检查服务状态
+      const baseUrl = this.config.apiUrl.replace('/api/chat', '')
+      const response = await fetch(`${baseUrl}/api/tags`, {
         method: 'GET',
         signal: controller.signal
       })
