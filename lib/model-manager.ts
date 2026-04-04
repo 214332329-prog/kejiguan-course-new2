@@ -292,11 +292,30 @@ class ModelManager {
         this.status.totalRequests++
         this.updateAverageResponseTime(responseTime)
 
+        // 处理 Ollama API 响应格式
+        // Ollama 返回: { message: { role: 'assistant', content: '...' } }
+        // OpenAI 返回: { choices: [{ message: { content: '...' } }] }
+        let content = '无响应内容'
+        if (data.message?.content) {
+          // Ollama 格式
+          content = data.message.content
+        } else if (data.choices?.[0]?.message?.content) {
+          // OpenAI 格式
+          content = data.choices[0].message.content
+        } else if (data.response) {
+          // 其他格式
+          content = data.response
+        }
+
         return {
           success: true,
           data: {
-            content: data.choices?.[0]?.message?.content || data.response || '无响应内容',
-            usage: data.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }
+            content,
+            usage: data.usage || { 
+              prompt_tokens: data.prompt_eval_count || 0, 
+              completion_tokens: data.eval_count || 0, 
+              total_tokens: (data.prompt_eval_count || 0) + (data.eval_count || 0) 
+            }
           },
           responseTime,
           timestamp: Date.now()
