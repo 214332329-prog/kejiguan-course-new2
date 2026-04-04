@@ -267,8 +267,12 @@ class ModelManager {
           model: this.config.modelName,
           messages,
           temperature: options?.temperature ?? 0.7,
-          max_tokens: options?.max_tokens ?? 2048,
-          stream: false
+          max_tokens: options?.max_tokens ?? 1024,
+          stream: false,
+          options: {
+            num_ctx: 4096,
+            num_predict: 1024
+          }
         }
 
         const response = await fetch(this.config.apiUrl, {
