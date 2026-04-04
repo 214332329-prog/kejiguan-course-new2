@@ -2,65 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Message } from '@/types'
-
-// 模拟教师专用OpenAI API调用
-const mockTeacherAICall = async (prompt: string, context: string): Promise<string> => {
-  // 模拟API调用延迟
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  
-  // 根据教师需求生成针对性回复
-  if (prompt.includes('课程设计') || prompt.includes('课程结构')) {
-    return `关于课程设计，我建议你：
-
-1. 明确课程目标和学习成果
-2. 设计合理的模块结构，每个模块控制在2-3个任务
-3. 确保内容由浅入深，循序渐进
-4. 结合理论与实践，增加互动元素
-5. 为每个任务设置清晰的评估标准
-
-需要我帮你具体设计某个模块的结构吗？`
-  } else if (prompt.includes('教学方法') || prompt.includes('教学策略')) {
-    return `关于教学方法，我建议你：
-
-1. 采用项目式学习，让学生在实践中学习
-2. 结合科技馆资源，设计实地考察任务
-3. 鼓励小组合作，培养团队协作能力
-4. 使用多媒体资源增强学习体验
-5. 定期进行形成性评估，及时调整教学策略
-
-需要我针对某个具体主题提供更详细的教学建议吗？`
-  } else if (prompt.includes('任务设计') || prompt.includes('作业设计')) {
-    return `关于任务设计，我建议你：
-
-1. 任务难度适中，既有挑战性又能完成
-2. 提供明确的任务要求和评分标准
-3. 设计多样化的任务形式，如调研报告、设计方案、实验报告等
-4. 鼓励学生创新思维，允许不同的解决方案
-5. 为任务提供必要的学习资源和参考资料
-
-需要我帮你设计某个具体任务的详细要求吗？`
-  } else if (prompt.includes('评估') || prompt.includes('评价')) {
-    return `关于学习评估，我建议你：
-
-1. 采用多元化的评估方式，包括过程性评估和总结性评估
-2. 建立明确的评分标准和 rubric
-3. 注重学生的学习过程和进步
-4. 提供及时、具体的反馈
-5. 鼓励学生进行自评和互评
-
-需要我帮你设计评估表格或评分标准吗？`
-  } else {
-    return `我理解你的问题。作为教师课程开发助手，我可以帮助你：
-
-1. 设计课程结构和模块
-2. 制定教学方法和策略
-3. 设计任务和评估标准
-4. 提供教学资源和参考资料
-5. 解决课程开发中的具体问题
-
-请告诉我你具体需要哪方面的帮助？`
-  }
-}
+import { qwenClient } from '@/lib/qwen-client'
 
 interface TeacherAIAssistantProps {
   currentPage?: string
@@ -107,18 +49,39 @@ export default function TeacherAIAssistant({ currentPage = '' }: TeacherAIAssist
     setMessages((prev) => [...prev, userMessage])
     setInputMessage('')
 
-    // 模拟AI回复
+    // 准备消息历史
+    const chatMessages = messages.map(msg => ({
+      role: msg.type === 'ai' ? 'assistant' as const : 'user' as const,
+      content: msg.content
+    })).filter((_, index) => index > 0) // 跳过初始欢迎消息
+
+    chatMessages.push({
+      role: 'user',
+      content: inputMessage
+    })
+
+    // 调用真实的Qwen API
     try {
-      const context = currentPage
-      const aiResponse = await mockTeacherAICall(inputMessage, context)
+      const response = await qwenClient.chat(chatMessages)
       
-      const aiReply: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai',
-        content: aiResponse,
-        timestamp: new Date().toISOString(),
+      if (response.success && response.data) {
+        const aiReply: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai',
+          content: response.data.content,
+          timestamp: new Date().toISOString(),
+        }
+        setMessages((prev) => [...prev, aiReply])
+      } else {
+        // Qwen API不可用时，降级到模拟回复
+        const aiReply: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai',
+          content: response.error || '抱歉，我暂时无法回答你的问题，请稍后再试。',
+          timestamp: new Date().toISOString(),
+        }
+        setMessages((prev) => [...prev, aiReply])
       }
-      setMessages((prev) => [...prev, aiReply])
     } catch (error) {
       console.error('AI response error:', error)
       const errorReply: Message = {
